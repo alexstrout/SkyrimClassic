@@ -14,7 +14,7 @@ event onActivate(objectReference AkActivator)
 		;gotostate ("done") ;Allow script to repeat ~fox
 
 	;Otherwise show message if player already has pet ~fox
-	ElseIf !(DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().IsInDialogueWithPlayer() ;I have no idea what I'm doing ~fox
+	ElseIf !((DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().IsInDialogueWithPlayer() || (DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().IsBleedingOut()) ;I have no idea what I'm doing ~fox
 		foxPetScriptHasAnimalMessage.Show()
 	EndIF
 endEvent
