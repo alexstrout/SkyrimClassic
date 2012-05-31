@@ -1,0 +1,37 @@
+Adds Kitt and Sola, two simple pet foxes, to Dragonsreach. Uses a variant of the Stray Dog script - simply approach either fox and talk, and they'll be added to your party if you don't already have an animal following (if you do, the script will automatically kick your old one).
+Both foxes will return to Dragonsreach when dismissed, and can be re-added again.
+
+Will level with the player to 50, like all other followers. Also marked as essential (bleedout state at 0 health).
+
+Kitt, the red fox, is the bolder of the two and tanks Dragons like a champ.
+Sola, the snow fox, is slightly more likely to flee, but possesses the frost resistance found on usual snow foxes.
+
+By default, foxes have rather annoying idle breathing sounds, which can be silenced using this plugin: http://steamcommunity.com/sharedfiles/filedetails/?id=74276765
+
+Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scripts): http://steamcommunity.com/sharedfiles/filedetails/?id=10172
+
+Please note that the bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers - if they continue to be stuck, simply zone to another area (through a door, fast-travel, etc.) and they will reset.
+
+Revision History:
+r6:
+-- Code cleanup in scripts
+-- Partial fix for "broken bleedout" state (still bleeding out even though IsBleedingOut returns false) - activating a fox in a broken bleedout state will reset it
+
+r5:
+-- When activating a fox that is not in your party, it will now kick your old pet (useful if you have a "lost" stray dog etc.)
+-- Added more useful messages when activating a fox ("Kitt has joined your party.", etc.)
+
+r4:
+-- Removed needless Update.esm master (nothing from any updates have been used or modified)
+-- Fixed "You already have a pet." message displaying when trying to activate either fox in bleedout state.
+
+r3:
+-- Removed ArmorAddon entries; the fox companion race now directly copies morph/armor data from FoxRace. Will now be compatible with any plugin that modifies these entries.
+-- Buffed damage by 60% (matches dogs now)
+
+r2:
+-- Added Sola, a snow fox
+-- A message is now displayed if you can't take a fox because you already have a pet
+
+r1:
+-- Initial release.
