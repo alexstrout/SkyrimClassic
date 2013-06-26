@@ -18,6 +18,11 @@ SetHirelingRehire Property HirelingRehireScript Auto
 ;Property to tell follower to say dismissal line
 Int Property iFollowerDismiss Auto Conditional
 
+; PATCH 1.9: 77615: remove unplayable hunting bow when follower is dismissed
+Weapon Property FollowerHuntingBow Auto
+Ammo Property FollowerIronArrow Auto
+
+
 Function SetFollower(ObjectReference FollowerRef)
 
 	actor FollowerActor = FollowerRef as Actor
@@ -105,7 +110,13 @@ Function DismissFollower(Int iMessage = 0, Int iSayLine = 1)
 		DismissedFollowerActor.AddToFaction(pDismissedFollower)
 		DismissedFollowerActor.SetPlayerTeammate(false)
 		DismissedFollowerActor.RemoveFromFaction(pCurrentHireling)
-		DismissedFollowerActor.SetAV("WaitingForPlayer", 0)			
+		DismissedFollowerActor.SetAV("WaitingForPlayer", 0)	
+
+		; PATCH 1.9: 77615: remove unplayable hunting bow when follower is dismissed
+		DismissedFollowerActor.RemoveItem(FollowerHuntingBow, 999, true)
+		DismissedFollowerActor.RemoveItem(FollowerIronArrow, 999, true)
+		; END Patch 1.9 fix
+
 		;hireling rehire function
 		HirelingRehireScript.DismissHireling(DismissedFollowerActor.GetActorBase())
 		If iSayLine == 1
