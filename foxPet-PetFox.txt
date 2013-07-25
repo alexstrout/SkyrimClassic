@@ -10,9 +10,14 @@ By default, foxes have rather annoying idle breathing sounds, which can be silen
 
 Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scripts): http://steamcommunity.com/sharedfiles/filedetails/?id=10172
 
-Please note that the bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers - if they continue to be stuck, simply zone to another area (through a door, fast-travel, etc.) and they will reset.
+Please note that the bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
 
 Revision History:
+r7:
+-- Automatic bleedout fix incase the foxes do get stuck in bleedout state (no need to zone / manually fix / etc.)
+-- Foxes can now be given orders like normal human followers, because they're sharp. If pointed at a chest / cupboard / etc. they will happily toss everything inside all over the floor, making a huge mess.
+-- Old pets are now properly dismissed when adding to add a fox as a follower (broke this in r6 - whoops!)
+
 r6:
 -- Code cleanup in scripts
 -- Partial fix for "broken bleedout" state (still bleeding out even though IsBleedingOut returns false) - activating a fox in a broken bleedout state will reset it
