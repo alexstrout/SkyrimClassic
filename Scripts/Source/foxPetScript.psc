@@ -8,10 +8,12 @@ Message Property foxPetScriptHasAnimalMessage Auto
 ;Actor property dog auto
 
 Function foxPetAddPet()
+	Actor ThisActor = (self as ObjectReference) as Actor
+
+	ThisActor.SetPlayerTeammate(true, true)
+	ThisActor.SetNoBleedoutRecovery(false)
 	(DialogueFollower as DialogueFollowerScript).SetAnimal(self)
-	;(DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().SetPlayerTeammate(abCanDoFavor = true) ;Allow favors once they're fixed up
 	foxPetScriptGetNewAnimalMessage.Show()
-	;gotostate ("done") ;Allow script to repeat ~fox
 EndFunction
 
 Function foxPetRemovePet()
@@ -21,6 +23,16 @@ Function foxPetRemovePet()
 EndFunction
 
 auto state Waiting
+event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
+	Actor ThisActor = (self as ObjectReference) as Actor
+	ObjectReference DroppedItem = ThisActor.DropObject(akBaseItem, 9999)
+
+	;Immediately drop it and release ownership (don't let your pets manage your cupboard!) ~fox
+	If DroppedItem.GetActorOwner() == ThisActor.GetActorBase()
+		DroppedItem.SetActorOwner(None)
+	EndIf
+endEvent
+
 event onActivate(objectReference AkActivator)
 	Actor ThisActor = (self as ObjectReference) as Actor
 
@@ -32,17 +44,6 @@ event onActivate(objectReference AkActivator)
 	ElseIf !ThisActor.IsPlayerTeammate()
 		foxPetRemovePet()
 		foxPetAddPet()
-
-	;Finally, attempt to fix a broken bleedout ~fox
-	ElseIf !(ThisActor.IsInDialogueWithPlayer() || ThisActor.IsBleedingOut())
-		ThisActor.Disable()
-		ThisActor.Enable()
-		Utility.Wait(1)
-		ThisActor.Disable()
-		ThisActor.Enable()
 	EndIF
 endEvent
 endState
-
-state done
-endstate
