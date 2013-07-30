@@ -13,6 +13,11 @@ Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scr
 Please note that the bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
 
 Revision History:
+r8:
+-- Fixed issue where foxes could get stuck bleedout (vanilla bug)
+-- Fixed issue where foxes could get stuck in a combat state after combat ended because of bleedout (vanilla bug)
+-- Both foxes should more reliably wander around Dragonsreach when not in the player's party
+
 r7:
 -- Automatic bleedout fix incase the foxes do get stuck in bleedout state (no need to zone / manually fix / etc.)
 -- Foxes can now be given orders like normal human followers, because they're sharp. If pointed at a chest / cupboard / etc. they will happily toss everything inside all over the floor, making a huge mess.

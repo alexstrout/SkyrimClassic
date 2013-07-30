@@ -5,34 +5,29 @@ DialogueFollowerScript Property DialogueFollower Auto
 GlobalVariable Property PlayerAnimalCount Auto
 Message Property foxPetScriptGetNewAnimalMessage Auto
 Message Property foxPetScriptHasAnimalMessage Auto
-;Actor property dog auto
+Actor Property PlayerRef Auto
 
-Function foxPetAddPet()
+function foxPetAddPet()
 	(DialogueFollower as DialogueFollowerScript).SetAnimal(self)
 	(DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().SetPlayerTeammate(true, true)
 	(DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().SetNoBleedoutRecovery(false)
 	foxPetScriptGetNewAnimalMessage.Show()
-EndFunction
+endFunction
 
-Function foxPetRemovePet()
+function foxPetRemovePet()
 	foxPetScriptHasAnimalMessage.Show()
 	(DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().SetPlayerTeammate(false)
 	(DialogueFollower as DialogueFollowerScript).DismissAnimal()
-EndFunction
+endFunction
 
 event OnCombatStateChanged(Actor akTarget, int aeCombatState)
-	Actor ThisActor = (self as ObjectReference) as Actor
-
-	if (aeCombatState == 0 && ThisActor.IsBleedingOut())
-		ThisActor.Disable()
-		ThisActor.Enable()
-		Utility.Wait(1)
-		ThisActor.Disable()
-		ThisActor.Enable()
+	;Hack - begin registering combat check to fix getting stuck in combat (bug in bleedouts)
+	;bloat-friendly as it will never fire more than once at a time, even if OnActivate is called multiple times in this time-frame
+	if (aeCombatState == 1)
+		RegisterForSingleUpdate(12.0)
 	endif
 endEvent
 
-auto state Waiting
 event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	Actor ThisActor = (self as ObjectReference) as Actor
 	ObjectReference DroppedItem = ThisActor.DropObject(akBaseItem, 9999)
@@ -43,17 +38,30 @@ event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemRefere
 	endif
 endEvent
 
-event onActivate(objectReference AkActivator)
+event OnActivate(ObjectReference akActivator)
 	Actor ThisActor = (self as ObjectReference) as Actor
 
 	;if player does not have an animal, make this animal player's animal
-	if PlayerAnimalCount.GetValueInt() == 0
+	if (PlayerAnimalCount.GetValueInt() == 0)
 		foxPetAddPet()
 
 	;Otherwise show message if player already has pet ~fox
-	elseif !ThisActor.IsPlayerTeammate()
+	elseif (!ThisActor.IsPlayerTeammate())
 		foxPetRemovePet()
 		foxPetAddPet()
 	endif
 endEvent
-endState
+
+event OnUpdate()
+	Actor ThisActor = (self as ObjectReference) as Actor
+
+	;If we've exited combat then actually stop combat
+	if (!PlayerREF.IsInCombat())
+		ThisActor.StopCombat()
+	endif
+
+	;Register for another update as long as we're in combat
+	if (ThisActor.IsInCombat())
+		RegisterForSingleUpdate(12.0)
+	endif
+endEvent
