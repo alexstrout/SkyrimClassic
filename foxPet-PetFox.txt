@@ -13,6 +13,9 @@ Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scr
 Please note that the bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
 
 Revision History:
+r9:
+-- Fixed a minor (but longstanding) issue where foxes could be issued orders after being released from the party, due to the dialog scripts using the same names as their vanilla counterparts, causing them to be ignored when loaded from the BSA archive
+
 r8:
 -- Fixed issue where foxes could get stuck bleedout (vanilla bug)
 -- Fixed issue where foxes could get stuck in a combat state after combat ended because of bleedout (vanilla bug)
