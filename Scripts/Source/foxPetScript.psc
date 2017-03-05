@@ -8,10 +8,22 @@ Message Property foxPetScriptHasAnimalMessage Auto
 Actor Property PlayerRef Auto
 
 function foxPetAddPet()
+	Actor ThisActor = (self as ObjectReference) as Actor
+
+	;Lockpicking is tampered with in SetAnimal by vanilla scripts, so store it to be fixed later
+	;It already be 0 if pet was hired in previous versions, so check BaseAV too if that happens
+	float tempAV = ThisActor.GetAV("Lockpicking")
+	if (tempAV == 0)
+		tempAV = ThisActor.GetBaseAV("Lockpicking")
+	endif
+
 	(DialogueFollower as DialogueFollowerScript).SetAnimal(self)
-	(DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().SetPlayerTeammate(true, true)
-	(DialogueFollower as DialogueFollowerScript).pAnimalAlias.GetActorRef().SetNoBleedoutRecovery(false)
+	ThisActor.SetPlayerTeammate(true, true)
+	ThisActor.SetNoBleedoutRecovery(false)
 	foxPetScriptGetNewAnimalMessage.Show()
+
+	;Revert Lockpicking to whatever it was before SetAnimal tampered with it
+	ThisActor.SetAV("Lockpicking", tempAV)
 endFunction
 
 function foxPetRemovePet()
