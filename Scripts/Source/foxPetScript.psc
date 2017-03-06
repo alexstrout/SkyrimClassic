@@ -13,9 +13,6 @@ function foxPetAddPet()
 	;Lockpicking is tampered with in SetAnimal by vanilla scripts, so store it to be fixed later
 	;It could already be 0 if pet was hired in previous versions, so check BaseAV too if that happens
 	float tempAV = ThisActor.GetAV("Lockpicking")
-	if (tempAV == 0)
-		tempAV = ThisActor.GetBaseAV("Lockpicking")
-	endif
 
 	DialogueFollower.SetAnimal(self)
 	ThisActor.SetPlayerTeammate(true, true)
@@ -27,9 +24,12 @@ function foxPetAddPet()
 endFunction
 
 function foxPetRemovePet()
+	Actor ThatActor = DialogueFollower.pAnimalAlias.GetActorRef()
+
 	foxPetScriptHasAnimalMessage.Show()
-	DialogueFollower.pAnimalAlias.GetActorRef().SetPlayerTeammate(false)
 	DialogueFollower.DismissAnimal()
+	ThatActor.SetPlayerTeammate(false)
+	ThatActor.SetAV("WaitingForPlayer", 0)
 endFunction
 
 event OnCombatStateChanged(Actor akTarget, int aeCombatState)
@@ -58,6 +58,16 @@ event OnActivate(ObjectReference akActivator)
 	;Normally, we don't show a trade dialogue, so make sure we grab any stray arrows etc. that may be in pet's inventory
 	;This should be unnecessary as we immediately drop any added item - but we'll still do this just in case it's a really old save etc.
 	ThisActor.RemoveAllItems(Game.GetPlayer(), false, true)
+
+	;Also fix 0 lockpicking on old saves caused by vanilla SetAnimal (doesn't really matter, but should be done anyway)
+	if (ThisActor.GetAV("Lockpicking") == 0)
+		if (ThisActor.IsPlayerTeammate())
+			foxPetRemovePet()
+		endif
+		ThisActor.Disable()
+		Utility.Wait(5)
+		ThisActor.Enable()
+	endif
 
 	;Add ourself as a pet - unless there is an old pet, in which case we will just kick it and add ourself anyway
 	if (PlayerAnimalCount.GetValueInt() == 0)
