@@ -55,7 +55,7 @@ event OnActivate(ObjectReference akActivator)
 
 	;Normally, we don't show a trade dialogue, so make sure we grab any stray arrows etc. that may be in pet's inventory
 	;This should be unnecessary as we immediately drop any added item - but we'll still do this just in case it's a really old save etc.
-	ThisActor.RemoveAllItems(PlayerRef, false, true)
+	ThisActor.RemoveAllItems(Game.GetPlayer(), false, true)
 
 	;Add ourself as a pet - unless there is an old pet, in which case we will just kick it and add ourself anyway
 	if (PlayerAnimalCount.GetValueInt() == 0)
@@ -69,7 +69,7 @@ endEvent
 event OnUpdate()
 	Actor ThisActor = (self as ObjectReference) as Actor
 
-	;If we've exited combat then actually stop combat
+	;If we've exited combat then actually stop combat - this fixes perma-bleedout issues
 	if (!PlayerRef.IsInCombat())
 		ThisActor.StopCombat()
 	endif
