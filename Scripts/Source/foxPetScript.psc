@@ -42,10 +42,12 @@ endEvent
 
 event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	Actor ThisActor = (self as ObjectReference) as Actor
-	ObjectReference DroppedItem = ThisActor.DropObject(akBaseItem, 9999)
 
 	;Immediately drop it and release ownership (don't let your pets manage your cupboard!)
-	if DroppedItem.GetActorOwner() == ThisActor.GetActorBase()
+	;Note: There is a vanilla bug where items taken by followers are sometimes marked as stolen
+	;Debug.Trace("Dropping Base " + akBaseItem + " (" + aiItemCount + ")")
+	ObjectReference DroppedItem = ThisActor.DropObject(akBaseItem, aiItemCount)
+	if (DroppedItem && DroppedItem.GetActorOwner() == ThisActor.GetActorBase())
 		DroppedItem.SetActorOwner(None)
 	endif
 endEvent
