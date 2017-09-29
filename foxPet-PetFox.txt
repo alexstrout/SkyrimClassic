@@ -13,6 +13,12 @@ Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scr
 Please note that the bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
 
 Revision History:
+r10:
+-- Fix vanilla SetAnimal / DismissAnimal scripts forcing pet's lockpicking ability to 0 (doesn't really matter? But nice to fix)
+-- Fix overriding Stray Dog dialogue with generic *blank stare* (oops!)
+-- Small script code cleanups, particularly with "picking up" dropped items (and immediately dropping them again)
+(Note: There is a vanilla bug where items taken by followers are sometimes marked as stolen. Unfortunately, I wasn't able to fix this.)
+
 r9:
 -- Fixed a minor (but longstanding) issue where foxes could be issued orders after being released from the party, due to the dialog scripts using the same names as their vanilla counterparts, causing them to be ignored when loaded from the BSA archive
 
