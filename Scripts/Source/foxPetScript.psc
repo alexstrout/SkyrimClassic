@@ -69,6 +69,11 @@ event OnActivate(ObjectReference akActivator)
 		ThisActor.Enable()
 	endif
 
+	;If we're in dialoue, do nothing - may allow better compatibility with follower frameworks, etc.
+	if (ThisActor.IsInDialogueWithPlayer())
+		return
+	endif
+
 	;Add ourself as a pet - unless there is an old pet, in which case we will just kick it and add ourself anyway
 	if (PlayerAnimalCount.GetValueInt() == 0)
 		foxPetAddPet()
