@@ -59,8 +59,8 @@ event OnActivate(ObjectReference akActivator)
 
 	;Also fix 0 lockpicking on old saves caused by vanilla SetAnimal (doesn't really matter, but should be done anyway)
 	;Also for some reason PlayerRef is None on old saves...?
-	if (!PlayerRef || ThisActor.GetAV("Lockpicking") == 0)
-		Debug.MessageBox("Updating old foxPet, please wait!")
+	if (!PlayerRef || ThisActor.GetBaseAV("Lockpicking") == 0)
+		Debug.MessageBox("Updating old foxPet! Please wait...")
 		if (!PlayerRef)
 			PlayerRef = Game.GetPlayer()
 		endif
@@ -70,6 +70,7 @@ event OnActivate(ObjectReference akActivator)
 		ThisActor.Disable()
 		Utility.Wait(5)
 		ThisActor.Enable()
+		Debug.MessageBox("foxPet good to go!")
 	endif
 
 	;Normally, we don't show a trade dialogue, so make sure we grab any stray arrows etc. that may be in pet's inventory
