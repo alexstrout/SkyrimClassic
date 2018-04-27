@@ -37,6 +37,11 @@ ReferenceAlias Property pExtraAlias7 Auto
 ReferenceAlias Property pExtraAlias8 Auto
 ReferenceAlias[] Property Followers Auto
 
+Sound Property FollowerLearnSpellSound Auto
+Sound Property FollowerForgetSpellSound Auto
+Message Property FollowerLearnSpellMessage Auto
+Message Property FollowerForgetSpellMessage Auto
+
 int Property foxFollowVer Auto
 int Property foxFollowScriptVer = 1 AutoReadOnly
 

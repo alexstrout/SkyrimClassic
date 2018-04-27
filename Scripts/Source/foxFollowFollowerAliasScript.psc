@@ -69,9 +69,11 @@ function AddBookSpell(Book SomeBook, bool ShowMessage = true)
 			LearnedSpellBookList.AddForm(SomeBook)
 			ThisActor.AddSpell(BookSpell)
 			;Debug.Trace(ThisActor + " learning " + BookSpell + BookSpell.GetName())
-			;if (ShowMessage)
-			;	Debug.MessageBox("Follower learning " + BookSpell.GetName()) ;Temp until make message durr
-			;endif
+			if (ShowMessage)
+				;Debug.MessageBox("Follower learning " + BookSpell.GetName()) ;Temp until make message durr
+				DialogueFollower.FollowerLearnSpellMessage.Show()
+				DialogueFollower.FollowerLearnSpellSound.Play(ThisActor)
+			endif
 		;else
 		;	Debug.MessageBox("Follower already knows " + BookSpell.GetName() + "!")
 		endif
@@ -92,9 +94,11 @@ function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCond
 			LearnedSpellBookList.RemoveAddedForm(SomeBook)
 			ThisActor.RemoveSpell(BookSpell)
 			;Debug.Trace(ThisActor + " forgetting " + BookSpell + BookSpell.GetName())
-			;if (ShowMessage)
-			;	Debug.MessageBox("Follower forgetting " + BookSpell.GetName()) ;Temp until make message durr
-			;endif
+			if (ShowMessage)
+				;Debug.MessageBox("Follower forgetting " + BookSpell.GetName()) ;Temp until make message durr
+				DialogueFollower.FollowerForgetSpellMessage.Show()
+				DialogueFollower.FollowerForgetSpellSound.Play(ThisActor)
+			endif
 		endif
 	endif
 endFunction
