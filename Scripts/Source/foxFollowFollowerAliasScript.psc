@@ -61,19 +61,19 @@ event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemRefere
 		AddBookSpell(SomeBook)
 	endif
 endEvent
-function AddBookSpell(Book SomeBook, bool ShowMessages = true)
+function AddBookSpell(Book SomeBook, bool ShowMessage = true)
 	Spell BookSpell = SomeBook.GetSpell()
 	if (BookSpell)
 		Actor ThisActor = Self.GetActorRef()
 		if (!ThisActor.HasSpell(BookSpell))
 			LearnedSpellBookList.AddForm(SomeBook)
 			ThisActor.AddSpell(BookSpell)
-			Debug.Trace(ThisActor + " learning " + BookSpell)
-			if (ShowMessages)
-				Debug.MessageBox("Follower learning " + BookSpell.GetName()) ;Temp until make message durr
-			endif
-		else
-			Debug.MessageBox("Follower already knows "+ BookSpell.GetName() + "!") ;Temp until make message durr
+			;Debug.Trace(ThisActor + " learning " + BookSpell + BookSpell.GetName())
+			;if (ShowMessage)
+			;	Debug.MessageBox("Follower learning " + BookSpell.GetName()) ;Temp until make message durr
+			;endif
+		;else
+		;	Debug.MessageBox("Follower already knows " + BookSpell.GetName() + "!")
 		endif
 	endif
 endFunction
@@ -84,17 +84,17 @@ event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemRefe
 		RemoveBookSpell(SomeBook, RemoveCondition = LearnedSpellBookList.HasForm(SomeBook) && Self.GetActorRef().GetItemCount(akBaseItem) == 0)
 	endif
 endEvent
-function RemoveBookSpell(Book SomeBook, bool ShowMessages = true, bool RemoveCondition = true)
+function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCondition = true)
 	Spell BookSpell = SomeBook.GetSpell()
 	if (BookSpell)
 		Actor ThisActor = Self.GetActorRef()
 		if (RemoveCondition && ThisActor.HasSpell(BookSpell))
 			LearnedSpellBookList.RemoveAddedForm(SomeBook)
 			ThisActor.RemoveSpell(BookSpell)
-			Debug.Trace(ThisActor + " forgetting " + BookSpell)
-			if (ShowMessages)
-				Debug.MessageBox("Follower forgetting "+ BookSpell.GetName()) ;Temp until make message durr
-			endif
+			;Debug.Trace(ThisActor + " forgetting " + BookSpell + BookSpell.GetName())
+			;if (ShowMessage)
+			;	Debug.MessageBox("Follower forgetting " + BookSpell.GetName()) ;Temp until make message durr
+			;endif
 		endif
 	endif
 endFunction
@@ -111,7 +111,7 @@ function AddAllBookSpells()
 		i -= 1
 		SomeBook = ThisActor.GetNthForm(i) as Book
 		if (SomeBook)
-			AddBookSpell(SomeBook)
+			AddBookSpell(SomeBook, false)
 		endif
 	endWhile
 endFunction
@@ -123,7 +123,7 @@ function RemoveAllBookSpells()
 		i -= 1
 		SomeBook = LearnedSpellBookList.GetAt(i) as Book
 		if (SomeBook)
-			RemoveBookSpell(SomeBook)
+			RemoveBookSpell(SomeBook, false)
 		endif
 	endWhile
 
@@ -133,9 +133,9 @@ endFunction
 
 ;Track last follower activated so we have something to fall back on later
 event OnActivate(ObjectReference akActivator)
-	Debug.Trace("foxFollowActor - activated! :|")
+	;Debug.Trace("foxFollowActor - activated! :|")
 	if (akActivator == PlayerRef)
-		Debug.Trace("foxFollowActor - activated by Player! :D")
+		;Debug.Trace("foxFollowActor - activated by Player! :D")
 		DialogueFollower.CheckUpdate()
 		Actor ThisActor = Self.GetActorRef()
 		DialogueFollower.SetPreferredFollowerAlias(ThisActor)
@@ -144,7 +144,7 @@ event OnActivate(ObjectReference akActivator)
 		endwhile
 		Utility.Wait(DialogWaitTime)
 		DialogueFollower.ClearPreferredFollowerAlias(ThisActor)
-		Debug.Trace("foxFollowActor - finished being activated by Player :(")
+		;Debug.Trace("foxFollowActor - finished being activated by Player :(")
 	endif
 endEvent
 
@@ -155,8 +155,8 @@ event OnUpdate()
 		return
 	endif
 
-	;Register for another update as long as we're in combat
-	;Otherwise do nifty catchup stuff
+	;Register for longer-interval update as long as we're in combat
+	;Otherwise use a shorter-interval update to handle catchup
 	if (ThisActor.IsInCombat())
 		;If we've exited combat then actually stop combat - this fixes perma-bleedout issues
 		if (!PlayerRef.IsInCombat())
@@ -171,7 +171,7 @@ event OnUpdate()
 		if (dist > maxDist && !PlayerRef.IsOnMount())
 			float AngleZ = PlayerRef.GetAngleZ()
 			ThisActor.MoveTo(PlayerRef, -128.0 * Math.Sin(AngleZ), -128.0 * Math.Cos(AngleZ), 64.0, true)
-			Debug.Trace("foxFollowActor - initiating hyperjump!")
+			;Debug.Trace("foxFollowActor - initiating hyperjump!")
 		else
 			SetSpeedup(dist > maxDist * 0.5)
 		endif
@@ -193,11 +193,11 @@ function SetSpeedup(bool punchIt)
 		endif
 		ThisActor.ModAV("SpeedMult", 100)
 		ThisActor.ModAV("CarryWeight", 1) ;CarryWeight must be adjusted for SpeedMult to apply
-		Debug.Trace("foxFollowActor - initiating warp speed... Mach " + ThisActor.GetAV("SpeedMult"))
+		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + ThisActor.GetAV("SpeedMult"))
 	elseif (SpeedMult > 100)
 		;Using ModAV and ForceAV doesn't change BaseAV, so we can safely look those up to reset to previous values - appears to work across saves
 		ThisActor.ForceAV("SpeedMult", ThisActor.GetBaseAV("SpeedMult"))
 		ThisActor.ForceAV("CarryWeight", ThisActor.GetBaseAV("CarryWeight"))
-		Debug.Trace("foxFollowActor - dropping to impulse power")
+		;Debug.Trace("foxFollowActor - dropping to impulse power")
 	endif
 endFunction

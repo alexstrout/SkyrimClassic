@@ -106,16 +106,16 @@ ReferenceAlias function GetPreferredFollowerAlias(bool isFollower)
 	;Check to see if we have only one follower first - or if we're the only one of our Follower/Animal type (both are Vanilla cases we can solve)
 	;This is slower to do first, but safest as we can solve this with 99% certainty ;)
 	if (GetNumFollowers() == 1)
-		Debug.Trace("foxFollow got single alias")
+		;Debug.Trace("foxFollow got single alias")
 		return GetAnyFollowerAlias()
 	elseif ((isFollower && outNumFollowers == 1) || (!isFollower && outNumAnimals == 1))
-		Debug.Trace("foxFollow got single alias for follow/animal type - IsFollower: " + isFollower)
+		;Debug.Trace("foxFollow got single alias for follow/animal type - IsFollower: " + isFollower)
 		return GetAnyFollowerAliasByType(isFollower)
 	endif
 
 	;Do we have a PreferredFollowerAlias set?
 	if (PreferredFollowerAlias)
-		Debug.Trace("foxFollow got single preffered alias - IsFollower: " + isFollower)
+		;Debug.Trace("foxFollow got single preffered alias - IsFollower: " + isFollower)
 		return PreferredFollowerAlias
 	endif
 
@@ -125,12 +125,12 @@ ReferenceAlias function GetPreferredFollowerAlias(bool isFollower)
 	while (i < Followers.Length)
 		FollowerActor = Followers[i].GetActorRef()
 		if (FollowerActor && MeetsPreferredFollowerAliasConditions(FollowerActor))
-			Debug.Trace("foxFollow got first preferred-conditions-met alias - IsFollower: " + isFollower)
+			;Debug.Trace("foxFollow got first preferred-conditions-met alias - IsFollower: " + isFollower)
 			return Followers[i]
 		endif
 		i += 1
 	endwhile
-	Debug.Trace("foxFollow got no alias :( - IsFollower: " + isFollower)
+	;Debug.Trace("foxFollow got no alias :( - IsFollower: " + isFollower)
 	return None
 endFunction
 
@@ -174,7 +174,7 @@ endFunction
 
 ;Set our preferred follower (will use for ambiguous situations where possible) - called generally from current followers' OnActivate
 function SetPreferredFollowerAlias(Actor FollowerActor)
-	Debug.Trace("foxFollow SetPreferredFollowerAlias - IsFollower: " + IsFollower(FollowerActor))
+	;Debug.Trace("foxFollow SetPreferredFollowerAlias - IsFollower: " + IsFollower(FollowerActor))
 	PreferredFollowerAlias = GetFollowerAlias(FollowerActor)
 	LastFollowerActivatedAlias = PreferredFollowerAlias
 endFunction
@@ -182,7 +182,7 @@ endFunction
 ;Clear our preferred follower if it's set to FollowerActor - called from current followers' OnUpdate
 function ClearPreferredFollowerAlias(Actor FollowerActor)
 	if (PreferredFollowerAlias != None && PreferredFollowerAlias.GetActorRef() == FollowerActor)
-		Debug.Trace("foxFollow ClearPreferredFollowerAlias cleared! - IsFollower: " + IsFollower(FollowerActor))
+		;Debug.Trace("foxFollow ClearPreferredFollowerAlias cleared! - IsFollower: " + IsFollower(FollowerActor))
 		PreferredFollowerAlias = None
 	endif
 endFunction
@@ -226,7 +226,7 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower)
 	;This will be difficult to recover from later, so try to catch this here
 	ReferenceAlias FollowerAlias = GetFollowerAlias(FollowerRef)
 	if (FollowerAlias)
-		Debug.Trace("foxFollow attempted to add follower that already existed! Oops... - IsFollower: " + isFollower)
+		;Debug.Trace("foxFollow attempted to add follower that already existed! Oops... - IsFollower: " + isFollower)
 		DismissMultiFollower(FollowerAlias, isFollower)
 	endif
 
@@ -325,20 +325,20 @@ endFunction
 function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int iMessage = 0, int iSayLine = 1)
 	;This gets tricky because we very well may have no idea who we're actually dismissing
 	if (!FollowerAlias)
-		Debug.Trace("foxFollow attempting to dismiss None... - IsFollower: " + isFollower)
+		;Debug.Trace("foxFollow attempting to dismiss None... - IsFollower: " + isFollower)
 		FollowerAlias = GetPreferredFollowerAlias(isFollower)
 
 		;If we can't figure out a specific follower, try our LastFollowerActivatedAlias
 		;TODO Should we just dismiss everyone?
 		if (!FollowerAlias)
-			Debug.Trace("foxFollow attempting to dismiss LastActivated... - IsFollower: " + isFollower)
+			;Debug.Trace("foxFollow attempting to dismiss LastActivated... - IsFollower: " + isFollower)
 			FollowerAlias = LastFollowerActivatedAlias
 		endif
 	endif
 	if (!FollowerAlias)
 		;If that fails we're probably coming off a vanilla save - dismiss our Follower and Animal
 		;This actually shouldn't happen if FollowerAliasScript has kicked in with OnActivate, but who knows
-		Debug.Trace("foxFollow attempting to dismiss vanilla aliases... - IsFollower: " + isFollower)
+		;Debug.Trace("foxFollow attempting to dismiss vanilla aliases... - IsFollower: " + isFollower)
 		if (isFollower)
 			FollowerAlias = pFollowerAlias
 		else
@@ -446,7 +446,7 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	;We'll only need to clear these out - we've already cleaned up the ref above
 	FollowerAlias = GetFollowerAlias(FollowerActor)
 	while (FollowerAlias)
-		Debug.Trace("foxFollow cleaning up duplicate followers... - IsFollower: " + isFollower)
+		;Debug.Trace("foxFollow cleaning up duplicate followers... - IsFollower: " + isFollower)
 		FollowerAlias.Clear()
 		FollowerAlias = GetFollowerAlias(FollowerActor)
 	endwhile
