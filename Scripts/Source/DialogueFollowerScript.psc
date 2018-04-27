@@ -51,10 +51,29 @@ float Property InitialUpdateTime = 2.0 AutoReadOnly
 ReferenceAlias PreferredFollowerAlias
 ReferenceAlias LastFollowerActivatedAlias
 
-;Init our stuff, grabbing existing refs from vanilla save
-;We will also likely patch things here in the future if updates are made
+;On the off chance we're actually running this on a new game (DialogueFollower is ever-present!), init stuff!
 event OnInit()
-	Followers = new ReferenceAlias[10]
+	CheckForModUpdate(false)
+endEvent
+
+;See if we need to update from an old save (or first run from vanilla save)
+;Currently checked on OnInit, AddFollowerAlias and any current followers' OnActivate
+function CheckForModUpdate(bool ShowUpdateMessage = true)
+	if (foxFollowVer < foxFollowScriptVer)
+		if (foxFollowVer < 1)
+			ModUpdate1()
+		endif
+
+		;Ready to rock!
+		if (ShowUpdateMessage)
+			Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + foxFollowVer + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
+		endif
+		foxFollowVer = foxFollowScriptVer
+	endif
+endFunction
+function ModUpdate1()
+	;Init our stuff, grabbing existing refs from vanilla save
+ 	Followers = new ReferenceAlias[10]
 	Followers[0] = pFollowerAlias
 	Followers[1] = pAnimalAlias
 	Followers[2] = pExtraAlias1
@@ -79,23 +98,11 @@ event OnInit()
 	if (pAnimalAlias.GetActorRef())
 		(pAnimalAlias as foxFollowFollowerAliasScript).AddAllBookSpells()
 	endif
-
-	;Ready to rock!
-	Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + foxFollowVer + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
-	foxFollowVer = foxFollowScriptVer
-endEvent
-
-;See if we need to update from an old save (or first run from vanilla save)
-;Currently checked on AddFollowerAlias and any current followers' OnActivate
-function CheckUpdate()
-	if (foxFollowVer < foxFollowScriptVer)
-		OnInit()
-	endif
 endFunction
 
 ;Attempt to add follower by ref - returns alias if successful
 ReferenceAlias function AddFollowerAlias(ObjectReference FollowerRef)
-	CheckUpdate()
+	CheckForModUpdate()
 	int i = 0
 	while (i < Followers.Length)
 		if (Followers[i].ForceRefIfEmpty(FollowerRef))
