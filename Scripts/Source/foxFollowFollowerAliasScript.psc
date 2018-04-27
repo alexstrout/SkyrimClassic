@@ -8,6 +8,7 @@ DialogueFollowerScript Property DialogueFollower Auto
 ;End Vanilla FollowerAliasScript Members
 
 Actor Property PlayerRef Auto
+FormList Property LearnedSpellBookList Auto
 
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
 float Property FollowUpdateTime = 4.5 AutoReadOnly
@@ -57,37 +58,78 @@ endEvent
 event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	Book SomeBook = akBaseItem as Book
 	if (SomeBook)
-		Spell BookSpell = SomeBook.GetSpell()
-		if (BookSpell)
-			Actor ThisActor = Self.GetActorRef()
-			if (!ThisActor.HasSpell(BookSpell))
-				ThisActor.AddSpell(BookSpell)
-				Debug.Trace(ThisActor + " learning " + BookSpell)
-			else
-				ThisActor.RemoveItem(akBaseItem, 8888, true, PlayerRef)
-				Debug.MessageBox("Follower already knows this spell!") ;Temp until make message durr
+		AddBookSpell(SomeBook)
+	endif
+endEvent
+function AddBookSpell(Book SomeBook, bool ShowMessages = true)
+	Spell BookSpell = SomeBook.GetSpell()
+	if (BookSpell)
+		Actor ThisActor = Self.GetActorRef()
+		if (!ThisActor.HasSpell(BookSpell))
+			LearnedSpellBookList.AddForm(SomeBook)
+			ThisActor.AddSpell(BookSpell)
+			Debug.Trace(ThisActor + " learning " + BookSpell)
+			if (ShowMessages)
+				Debug.MessageBox("Follower learning " + BookSpell.GetName()) ;Temp until make message durr
+			endif
+		else
+			Debug.MessageBox("Follower already knows "+ BookSpell.GetName() + "!") ;Temp until make message durr
+		endif
+	endif
+endFunction
+
+event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akDestContainer)
+	Book SomeBook = akBaseItem as Book
+	if (SomeBook)
+		RemoveBookSpell(SomeBook, RemoveCondition = LearnedSpellBookList.HasForm(SomeBook) && Self.GetActorRef().GetItemCount(akBaseItem) == 0)
+	endif
+endEvent
+function RemoveBookSpell(Book SomeBook, bool ShowMessages = true, bool RemoveCondition = true)
+	Spell BookSpell = SomeBook.GetSpell()
+	if (BookSpell)
+		Actor ThisActor = Self.GetActorRef()
+		if (RemoveCondition && ThisActor.HasSpell(BookSpell))
+			LearnedSpellBookList.RemoveAddedForm(SomeBook)
+			ThisActor.RemoveSpell(BookSpell)
+			Debug.Trace(ThisActor + " forgetting " + BookSpell)
+			if (ShowMessages)
+				Debug.MessageBox("Follower forgetting "+ BookSpell.GetName()) ;Temp until make message durr
 			endif
 		endif
 	endif
-endEvent
+endFunction
 
-event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akDestContainer)
-	;Check to see if we're removing a "duplicate" spell - in which case, don't unlearn the spell! D'oh
-	;I suppose someone COULD remove 8888 spell tomes - but that would probably be too heavy for the follower to carry in the first place :)
-	;And if they really were carrying that many spell tomes they deserve to permanently keep the spell
-	if (aiItemCount == 8888)
-		return
-	endif
-	Book SomeBook = akBaseItem as Book
-	if (SomeBook)
-		Spell BookSpell = SomeBook.GetSpell()
-		Actor ThisActor = Self.GetActorRef()
-		if (BookSpell && ThisActor.HasSpell(BookSpell))
-			ThisActor.RemoveSpell(BookSpell)
-			Debug.Trace(ThisActor + " forgetting " + BookSpell)
+function AddAllBookSpells()
+	;RemoveAllBookSpells first just in case we got out of sync somehow (should never happen! But doesn't hurt)
+	;This isn't run often, so we can afford to be extra-cautious here
+	RemoveAllBookSpells()
+
+	Actor ThisActor = Self.GetActorRef()
+	int i = ThisActor.GetNumItems()
+	Book SomeBook = None
+	while i
+		i -= 1
+		SomeBook = ThisActor.GetNthForm(i) as Book
+		if (SomeBook)
+			AddBookSpell(SomeBook)
 		endif
-	endif
-endEvent
+	endWhile
+endFunction
+
+function RemoveAllBookSpells()
+	int i = LearnedSpellBookList.GetSize()
+	Book SomeBook = None
+	while i
+		i -= 1
+		SomeBook = LearnedSpellBookList.GetAt(i) as Book
+		if (SomeBook)
+			RemoveBookSpell(SomeBook)
+		endif
+	endWhile
+
+	;Fully revert just in case we missed any (we shouldn't!)
+	LearnedSpellBookList.Revert()
+endFunction
 
 ;Track last follower activated so we have something to fall back on later
 event OnActivate(ObjectReference akActivator)

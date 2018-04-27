@@ -65,9 +65,14 @@ event OnInit()
 	LastFollowerActivatedAlias = None
 
 	;Also add existing follower follower (as opposed to animal follower) to "info" faction
+	;Also retroactively learn spells from any spell tomes we might have?
 	Actor FollowerActor = pFollowerAlias.GetActorRef()
 	if (FollowerActor)
 		FollowerActor.AddToFaction(FollowerInfoFaction)
+		(pFollowerAlias as foxFollowFollowerAliasScript).AddAllBookSpells()
+	endif
+	if (pAnimalAlias.GetActorRef())
+		(pAnimalAlias as foxFollowFollowerAliasScript).AddAllBookSpells()
 	endif
 
 	;Ready to rock!
@@ -251,6 +256,10 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower)
 		return
 	endif
 
+	;Add back all our book-learned spells again - no real way to keep track of these when not following
+	;This has the added bonus of retroactively applying to previously dismissed vanilla followers carrying spell tomes
+	(FollowerAlias as foxFollowFollowerAliasScript).AddAllBookSpells()
+
 	;Check to see if we're at capacity - if so, set both follower counts to 1
 	;This prevents taking on any more followers of either kind until a reference is freed up
 	if (GetNumFollowers() >= Followers.Length)
@@ -352,6 +361,9 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 		pPlayerFollowerCount.SetValue(0)
 		pPlayerAnimalCount.SetValue(0)
 		FollowerActor.RemoveFromFaction(pCurrentHireling)
+		FollowerAlias.UnRegisterForUpdateGameTime()
+		FollowerAlias.UnRegisterForUpdate()
+		(FollowerAlias as foxFollowFollowerAliasScript).RemoveAllBookSpells()
 		FollowerAlias.Clear()
 		return
 	endif
@@ -418,9 +430,11 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 
 	;Ready to roll! Set both counts to 0 so we're ready to accept either follower type again
 	;Also cancel any pending update
+	;Also remove all our book-learned spells - no real way to keep track of these when not following
 	;Per Vanilla - "don't set count to 0 if Companions have replaced follower" (this actually makes sense here)
 	FollowerAlias.UnRegisterForUpdateGameTime()
 	FollowerAlias.UnRegisterForUpdate()
+	(FollowerAlias as foxFollowFollowerAliasScript).RemoveAllBookSpells()
 	FollowerAlias.Clear()
 	if (iMessage != 2)
 		pPlayerFollowerCount.SetValue(0)
@@ -428,7 +442,7 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	endif
 
 	;Finally, there's a chance we ended up with multiple followers pointing to the same ref
-	;This should never happen, but we should try to unwrangle it just in-case
+	;This should never happen, but we should try to unwrangle it just in case
 	;We'll only need to clear these out - we've already cleaned up the ref above
 	FollowerAlias = GetFollowerAlias(FollowerActor)
 	while (FollowerAlias)
