@@ -166,15 +166,18 @@ event OnUpdate()
 		if (!PlayerRef.IsInCombat())
 			ThisActor.StopCombat()
 		endif
+	elseif (ThisActor.IsDoingFavor())
+		SetSpeedup(false)
 	elseif (ThisActor.GetAV("WaitingForPlayer") == 0)
-	   	float maxDist = 2048.0
-	   	if (ThisActor.IsInInterior())
-	   		maxDist * 0.75
-	   	endif
+		float maxDist = 4096.0
+		if (!PlayerRef.HasLOS(ThisActor))
+			maxDist *= 0.5
+		endif
 		float dist = ThisActor.GetDistance(PlayerRef)
 		if (dist > maxDist && !PlayerRef.IsOnMount())
-			float AngleZ = PlayerRef.GetAngleZ()
-			ThisActor.MoveTo(PlayerRef, -128.0 * Math.Sin(AngleZ), -128.0 * Math.Cos(AngleZ), 64.0, true)
+			float aZ = PlayerRef.GetAngleZ()
+			ThisActor.MoveTo(PlayerRef, -192.0 * Math.Sin(aZ), -192.0 * Math.Cos(aZ), 64.0, true)
+			SetSpeedup(false)
 			;Debug.Trace("foxFollowActor - initiating hyperjump!")
 		else
 			SetSpeedup(dist > maxDist * 0.5)

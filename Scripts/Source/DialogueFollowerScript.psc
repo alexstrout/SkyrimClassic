@@ -73,7 +73,7 @@ function CheckForModUpdate(bool ShowUpdateMessage = true)
 endFunction
 function ModUpdate1()
 	;Init our stuff, grabbing existing refs from vanilla save
- 	Followers = new ReferenceAlias[10]
+	Followers = new ReferenceAlias[10]
 	Followers[0] = pFollowerAlias
 	Followers[1] = pAnimalAlias
 	Followers[2] = pExtraAlias1
