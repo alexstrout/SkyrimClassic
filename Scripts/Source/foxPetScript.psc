@@ -30,10 +30,16 @@ function foxPetAddPet()
 	ThisActor.SetAV("Lockpicking", tempAV)
 endFunction
 
-function foxPetRemovePet()
-	Actor ThatActor = DialogueFollower.pAnimalAlias.GetActorRef()
-
-	foxPetScriptHasAnimalMessage.Show()
+function foxPetRemovePet(Actor ThatActor = None)
+	if (!ThatActor)
+		ThatActor = DialogueFollower.pAnimalAlias.GetActorRef()
+		if (!ThatActor)
+			return
+		endif
+	endif
+	if (ThatActor != Self as ObjectReference)
+		foxPetScriptHasAnimalMessage.Show()
+	endif
 	DialogueFollower.DismissAnimal()
 	ThatActor.SetPlayerTeammate(false)
 	ThatActor.SetAV("WaitingForPlayer", 0)
@@ -71,7 +77,7 @@ event OnActivate(ObjectReference akActivator)
 			PlayerRef = Game.GetPlayer()
 		endif
 		if (ThisActor.IsPlayerTeammate())
-			foxPetRemovePet()
+			foxPetRemovePet(ThisActor)
 		endif
 		ThisActor.Disable()
 		Utility.Wait(5.0)
