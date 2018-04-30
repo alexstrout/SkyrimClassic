@@ -7,6 +7,7 @@ Message Property foxPetScriptGetNewAnimalMessage Auto
 Message Property foxPetScriptHasAnimalMessage Auto
 Message Property foxPetScriptUpdatingMessage Auto
 Message Property foxPetScriptUpdateCompleteMessage Auto
+ReferenceAlias Property AnimalNameAlias Auto
 Actor Property PlayerRef Auto
 
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
@@ -21,7 +22,9 @@ function foxPetAddPet()
 	DialogueFollower.SetAnimal(Self)
 	ThisActor.SetPlayerTeammate(true, true)
 	ThisActor.SetNoBleedoutRecovery(false)
+	AnimalNameAlias.ForceRefTo(ThisActor)
 	foxPetScriptGetNewAnimalMessage.Show()
+	AnimalNameAlias.Clear()
 
 	;Revert Lockpicking to whatever it was before SetAnimal tampered with it
 	ThisActor.SetAV("Lockpicking", tempAV)
