@@ -59,8 +59,9 @@ event OnActivate(ObjectReference akActivator)
 
 	;Also fix 0 lockpicking on old saves caused by vanilla SetAnimal (doesn't really matter, but should be done anyway)
 	;Also for some reason PlayerRef is None on old saves...?
+	;This should also fix very old pets that are still set as a teammate even though they were dismissed
 	if (!PlayerRef || ThisActor.GetBaseAV("Lockpicking") == 0)
-		Debug.MessageBox("Updating old foxPet! Please wait...")
+		Debug.Notification("Updating old foxPet! Please wait...")
 		if (!PlayerRef)
 			PlayerRef = Game.GetPlayer()
 		endif
@@ -68,9 +69,9 @@ event OnActivate(ObjectReference akActivator)
 			foxPetRemovePet()
 		endif
 		ThisActor.Disable()
-		Utility.Wait(5)
+		Utility.Wait(5.0)
 		ThisActor.Enable()
-		Debug.MessageBox("foxPet good to go!")
+		Debug.Notification("foxPet good to go!")
 	endif
 
 	;Normally, we don't show a trade dialogue, so make sure we grab any stray arrows etc. that may be in pet's inventory
@@ -84,10 +85,11 @@ event OnActivate(ObjectReference akActivator)
 	endif
 
 	;Add ourself as a pet - unless there is an old pet, in which case we will just kick it and add ourself anyway
-	if (PlayerAnimalCount.GetValueInt() == 0)
-		foxPetAddPet()
-	elseif (!ThisActor.IsPlayerTeammate())
-		foxPetRemovePet()
+	;Checking IsPlayerTeammate is a little more reliable now that we've fixed old foxPets' teammate status
+	if (!ThisActor.IsPlayerTeammate())
+		if (PlayerAnimalCount.GetValueInt() > 0)
+			foxPetRemovePet()
+		endif
 		foxPetAddPet()
 	endif
 endEvent
