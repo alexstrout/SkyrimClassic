@@ -5,6 +5,8 @@ DialogueFollowerScript Property DialogueFollower Auto
 GlobalVariable Property PlayerAnimalCount Auto
 Message Property foxPetScriptGetNewAnimalMessage Auto
 Message Property foxPetScriptHasAnimalMessage Auto
+Message Property foxPetScriptUpdatingMessage Auto
+Message Property foxPetScriptUpdateCompleteMessage Auto
 Actor Property PlayerRef Auto
 
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
@@ -61,7 +63,7 @@ event OnActivate(ObjectReference akActivator)
 	;Also for some reason PlayerRef is None on old saves...?
 	;This should also fix very old pets that are still set as a teammate even though they were dismissed
 	if (!PlayerRef || ThisActor.GetBaseAV("Lockpicking") == 0)
-		Debug.Notification("Updating old foxPet! Please wait...")
+		foxPetScriptUpdatingMessage.Show()
 		if (!PlayerRef)
 			PlayerRef = Game.GetPlayer()
 		endif
@@ -71,7 +73,7 @@ event OnActivate(ObjectReference akActivator)
 		ThisActor.Disable()
 		Utility.Wait(5.0)
 		ThisActor.Enable()
-		Debug.Notification("foxPet good to go!")
+		foxPetScriptUpdateCompleteMessage.Show()
 	endif
 
 	;Normally, we don't show a trade dialogue, so make sure we grab any stray arrows etc. that may be in pet's inventory
