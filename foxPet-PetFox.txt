@@ -13,6 +13,11 @@ Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scr
 Please note that the bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
 
 Revision History:
+r11:
+-- Improved compatibility with multi-follower frameworks (activating a fox no longer attempts to add it to the party if its "teammate" status is already set, or if it already has available dialogue)
+-- Fixed script's "None" PlayerRef on old saves (script will fix if necessary upon activating a fox)
+-- Added in-game messages for any necessary updating done via script (e.g. for the above change)
+
 r10:
 -- Fix vanilla SetAnimal / DismissAnimal scripts forcing pet's lockpicking ability to 0 (doesn't really matter? But nice to fix)
 -- Fix overriding Stray Dog dialogue with generic *blank stare* (oops!)
