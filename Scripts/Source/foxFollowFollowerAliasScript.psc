@@ -9,6 +9,8 @@ DialogueFollowerScript Property DialogueFollower Auto
 
 Actor Property PlayerRef Auto
 FormList Property LearnedSpellBookList Auto
+int LastFollowerLearnSpellSoundInstanceID
+int LastFollowerForgetSpellSoundInstanceID
 
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
 float Property FollowUpdateTime = 4.5 AutoReadOnly
@@ -72,7 +74,10 @@ function AddBookSpell(Book SomeBook, bool ShowMessage = true)
 			if (ShowMessage)
 				;Debug.MessageBox("Follower learning " + BookSpell.GetName()) ;Temp until make message durr
 				DialogueFollower.FollowerLearnSpellMessage.Show()
-				DialogueFollower.FollowerLearnSpellSound.Play(ThisActor)
+				if (LastFollowerLearnSpellSoundInstanceID)
+					Sound.StopInstance(LastFollowerLearnSpellSoundInstanceID)
+				endif
+				LastFollowerLearnSpellSoundInstanceID = DialogueFollower.FollowerLearnSpellSound.Play(ThisActor)
 			endif
 		;else
 		;	Debug.MessageBox("Follower already knows " + BookSpell.GetName() + "!")
@@ -97,7 +102,10 @@ function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCond
 			if (ShowMessage)
 				;Debug.MessageBox("Follower forgetting " + BookSpell.GetName()) ;Temp until make message durr
 				DialogueFollower.FollowerForgetSpellMessage.Show()
-				DialogueFollower.FollowerForgetSpellSound.Play(ThisActor)
+				if (LastFollowerForgetSpellSoundInstanceID)
+					Sound.StopInstance(LastFollowerForgetSpellSoundInstanceID)
+				endif
+				LastFollowerForgetSpellSoundInstanceID = DialogueFollower.FollowerForgetSpellSound.Play(ThisActor)
 			endif
 		endif
 	endif
