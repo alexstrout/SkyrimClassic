@@ -95,7 +95,9 @@ function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCond
 	Spell BookSpell = SomeBook.GetSpell()
 	if (BookSpell)
 		Actor ThisActor = Self.GetActorRef()
-		if (RemoveCondition && ThisActor.HasSpell(BookSpell))
+		;Note: ThisActor could theoretically be None here if we're cleaning up an invalid alias
+		;If this is the case, we're being called from RemoveAllBookSpells and LearnedSpellBookList will be reverted anyways, so we can safely skip this block
+		if (RemoveCondition && ThisActor && ThisActor.HasSpell(BookSpell))
 			LearnedSpellBookList.RemoveAddedForm(SomeBook)
 			ThisActor.RemoveSpell(BookSpell)
 			;Debug.Trace(ThisActor + " forgetting " + BookSpell + BookSpell.GetName())
@@ -139,7 +141,7 @@ function RemoveAllBookSpells()
 		endif
 	endWhile
 
-	;Fully revert just in case we missed any (we shouldn't!)
+	;Fully revert just in case we missed any (we shouldn't! Unless our reference ended up None somehow. Oops!)
 	LearnedSpellBookList.Revert()
 endFunction
 
@@ -149,8 +151,13 @@ event OnActivate(ObjectReference akActivator)
 	if (akActivator == PlayerRef)
 		;Debug.Trace("foxFollowActor - activated by Player! :D")
 		DialogueFollower.CheckForModUpdate()
+		int commandMode = 0
+		if (Input.IsKeyPressed(Input.GetMappedKey("Sprint")))
+			commandMode = 1
+			DialogueFollower.FollowerCommandModeMessage.Show()
+		endif
 		Actor ThisActor = Self.GetActorRef()
-		DialogueFollower.SetPreferredFollowerAlias(ThisActor)
+		DialogueFollower.SetPreferredFollowerAlias(ThisActor, commandMode)
 		while (DialogueFollower.MeetsPreferredFollowerAliasConditions(ThisActor))
 			Utility.Wait(DialogWaitTime)
 		endwhile
