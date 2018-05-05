@@ -50,11 +50,8 @@ event OnCombatStateChanged(Actor akTarget, int aeCombatState)
 endEvent
 
 event OnDeath(Actor akKiller)
-	DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(Self.GetActorRef()))
-	;DialogueFollower.pPlayerFollowerCount.SetValue(0)
-	;DialogueFollower.pPlayerAnimalCount.SetValue(0)
-	;Self.GetActorRef().RemoveFromFaction(DialogueFollower.pCurrentHireling)
-	;Self.Clear()
+	;Just let DismissMultiFollower handle death via express dismissal - iMessage -1 tells DismissMultiFollower to skip any messages
+	DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(Self.GetActorRef()), -1, 0)
 endEvent
 
 event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)

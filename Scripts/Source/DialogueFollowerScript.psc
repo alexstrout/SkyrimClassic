@@ -46,7 +46,7 @@ Message Property FollowerCommandModeMessage Auto
 int Property foxFollowVer Auto
 int Property foxFollowScriptVer = 1 AutoReadOnly
 
-float Property WaitAroundForPlayerGameTime = 72 AutoReadOnly
+float Property WaitAroundForPlayerGameTime = 72.0 AutoReadOnly
 float Property InitialUpdateTime = 2.0 AutoReadOnly
 
 ReferenceAlias PreferredFollowerAlias
@@ -193,7 +193,8 @@ function SetPreferredFollowerAlias(Actor FollowerActor, int newCommandMode = 0)
 	LastFollowerActivatedAlias = PreferredFollowerAlias
 
 	;Also handle CommandMode here - for now, CommandMode > 0 means command all followers
-	CommandMode = newCommandMode
+	;Assign a negative value to indicate CommandMode is waiting to be consumed by a supported command
+	CommandMode = -newCommandMode
 endFunction
 
 ;Clear our preferred follower if it's set to FollowerActor - called from current followers' OnUpdate
@@ -306,10 +307,17 @@ endFunction
 ;Version of FollowerWait / FollowerFollow that handles multiple followers
 ;Note: isFollower only matters if FollowerAlias is None
 function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, int mode)
-	;If we're commanding multiple followers (for now just CommandMode > 0) then run this on all followers
-	if (CommandMode)
-		CommandMode = 0
+	;This gets tricky because we very well may have no idea who we're actually telling to follow / wait
+	;However, if we're commanding multiple followers, this is fine and we'll actually force a None FollowerAlias...
+	if (CommandMode < 0)
+		CommandMode *= -1 ;Negate CommandMode again to indicate we've consumed it, so it's not again handled by recursive calls
+		FollowerAlias = None
+	elseif (!FollowerAlias)
+		FollowerAlias = GetPreferredFollowerAlias(isFollower)
+	endif
 
+	;If we can't figure out a specific follower, make everyone wait / follow - either we're in CommandMode, or we've been called from a quest or something
+	if (!FollowerAlias)
 		int i = 0
 		while (i < Followers.Length)
 			if (Followers[i].GetRef())
@@ -317,24 +325,10 @@ function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, 
 			endif
 			i += 1
 		endwhile
+		CommandMode = 0
 		return
 	endif
 
-	if (!FollowerAlias)
-		FollowerAlias = GetPreferredFollowerAlias(isFollower)
-
-		;If we can't figure out a specific follower, make everyone wait / follow - probably called from a quest or something
-		if (!FollowerAlias)
-			int i = 0
-			while (i < Followers.Length)
-				if (Followers[i].GetRef())
-					FollowerMultiFollowWait(Followers[i], isFollower, mode)
-				endif
-				i += 1
-			endwhile
-			return
-		endif
-	endif
 	FollowerAlias.GetActorRef().SetAV("WaitingForPlayer", mode)
 	if (mode > 0)
 		;SetObjectiveDisplayed(10, abforce = true)
@@ -359,74 +353,50 @@ endFunction
 
 ;Version of DismissFollower that handles multiple followers
 function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int iMessage = 0, int iSayLine = 1)
-	;If we're commanding multiple followers (for now just CommandMode > 0) then run this on all followers
-	if (CommandMode)
-		CommandMode = 0
+	;This gets tricky because we very well may have no idea who we're actually dismissing
+	;However, if we're commanding multiple followers, this is fine and we'll actually force a None FollowerAlias...
+	if (CommandMode < 0)
+		CommandMode *= -1 ;Negate CommandMode again to indicate we've consumed it, so it's not again handled by recursive calls
+		FollowerAlias = None
 
-		;iMessage 2 is companions dismissal that doesn't reset pPlayerFollowerCount / pPlayerAnimalCount
-		;Thus if we ever somehow ended up in this case (should never happen!) we should force iMessage to 0
-		if (iMessage == 2)
-			iMessage = 0
-		endif
+		;Just pass in iSayLine 0 because we don't really need to hear the whole party blab
+		;We'll keep iMessage though because rapid notifications aren't necessarily spammed and some of the info might be useful
+		;But! iMessage 2 is companions dismissal that doesn't reset PlayerFollowerCount / PlayerAnimalCount
+		;Double-But! If this ever happens (e.g. we're talking to a follower in CommandMode when triggered) we know our followers are getting replaced, so we'll trust it
+		;Besides, PlayerFollowerCount / AnimalFollowerCount is apparently messed with all over the place - so we'll need to sanitize those later anyway
+		iSayLine = 0
+	elseif (!FollowerAlias)
+		;Debug.Trace("foxFollow attempting to dismiss None... - IsFollower: " + isFollower)
+		FollowerAlias = GetPreferredFollowerAlias(isFollower)
+	endif
 
+	;If we can't figure out a specific follower, just dismiss everyone of our follow type - either we're in CommandMode, or we've been called from a quest or something
+	if (!FollowerAlias)
 		int i = 0
 		while (i < Followers.Length)
 			Actor MultiActor = Followers[i].GetActorRef()
-			if (MultiActor)
-				;Just pass in iSayLine 0 because we don't really need to hear the whole party blab
-				;We'll keep iMessage though because rapid notifications aren't necessarily spammed and some of the info might be useful
-				DismissMultiFollower(Followers[i], IsFollower(MultiActor), iMessage, 0)
-			else
-				;Let's just purge the slot anyways - iMessage -1 tells DismissMultiFollower to skip None Actor warning
+			if (!MultiActor)
+				;Just purge the slot anyways - iMessage -1 tells DismissMultiFollower to skip None Actor warning
 				DismissMultiFollower(Followers[i], true, -1, 0)
+			elseif (CommandMode || IsFollower(MultiActor) == isFollower)
+				DismissMultiFollower(Followers[i], isFollower, iMessage, iSayLine)
 			endif
 			i += 1
 		endwhile
+		CommandMode = 0
 		return
 	endif
 
-	;This gets tricky because we very well may have no idea who we're actually dismissing
-	if (!FollowerAlias)
-		;Debug.Trace("foxFollow attempting to dismiss None... - IsFollower: " + isFollower)
-		FollowerAlias = GetPreferredFollowerAlias(isFollower)
-
-		;If we can't figure out a specific follower, try our LastFollowerActivatedAlias
-		;TODO Should we just dismiss everyone?
-		if (!FollowerAlias)
-			;Debug.Trace("foxFollow attempting to dismiss LastActivated... - IsFollower: " + isFollower)
-			FollowerAlias = LastFollowerActivatedAlias
-		endif
-	endif
-	if (!FollowerAlias)
-		;If that fails we're probably coming off a vanilla save - dismiss our Follower and Animal
-		;This actually shouldn't happen if FollowerAliasScript has kicked in with OnActivate, but who knows
-		;Debug.Trace("foxFollow attempting to dismiss vanilla aliases... - IsFollower: " + isFollower)
-		if (isFollower)
-			FollowerAlias = pFollowerAlias
-		else
-			FollowerAlias = pAnimalAlias
-		endif
-		if (!FollowerAlias)
-			Debug.MessageBox("Couldn't figure out Follower to dismiss! Oops\nSkipping...\nIsFollower: " + isFollower)
-			return
-		endif
-		Debug.MessageBox("Dismissing Vanilla Follower!\nPossible mod or script conflict?\nIsFollower: " + isFollower)
-	endif
 	Actor FollowerActor = FollowerAlias.GetActorRef()
 	if (!FollowerActor || FollowerActor.IsDead())
 		;Express dismissal! Hiyaa1
-		;Fairly standard FollowerAliasScript.OnDeath / TrainedAnimalScript.OnDeath
-		pPlayerFollowerCount.SetValue(0)
-		pPlayerAnimalCount.SetValue(0)
-		if (FollowerActor)
+		;Fairly standard FollowerAliasScript.OnDeath / TrainedAnimalScript.OnDeath... More or less
+		if (FollowerActor && isFollower)
 			FollowerActor.RemoveFromFaction(pCurrentHireling)
 		elseif (iMessage != -1)
 			Debug.MessageBox("Can't dismiss None Actor! Oops\nClearing follower alias anyway...\nIsFollower: " + isFollower)
 		endif
-		FollowerAlias.UnRegisterForUpdateGameTime()
-		FollowerAlias.UnRegisterForUpdate()
-		(FollowerAlias as foxFollowFollowerAliasScript).RemoveAllBookSpells()
-		FollowerAlias.Clear()
+		DismissMultiFollowerClearAlias(FollowerAlias, FollowerActor, iMessage)
 		return
 	endif
 
@@ -490,14 +460,22 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 		AnimalDismissMessage.Show()
 	endif
 
-	;Ready to roll! Set both counts to 0 so we're ready to accept either follower type again
-	;Also cancel any pending update
-	;Also remove all our book-learned spells - no real way to keep track of these when not following
-	;Per Vanilla - "don't set count to 0 if Companions have replaced follower" (this actually makes sense here)
+	;Ready to roll!
+	DismissMultiFollowerClearAlias(FollowerAlias, FollowerActor, iMessage)
+endFunction
+function DismissMultiFollowerClearAlias(ReferenceAlias FollowerAlias, Actor FollowerActor, int iMessage)
+	;First, cancel any pending update
 	FollowerAlias.UnRegisterForUpdateGameTime()
 	FollowerAlias.UnRegisterForUpdate()
+
+	;Also remove all our book-learned spells - no real way to keep track of these when not following
 	(FollowerAlias as foxFollowFollowerAliasScript).RemoveAllBookSpells()
+
+	;Clear!
 	FollowerAlias.Clear()
+
+	;Set both counts to 0 so we're ready to accept either follower type again
+	;Per Vanilla - "don't set count to 0 if Companions have replaced follower" (this actually makes sense here)
 	if (iMessage != 2)
 		pPlayerFollowerCount.SetValue(0)
 		pPlayerAnimalCount.SetValue(0)
@@ -505,7 +483,11 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 
 	;Finally, there's a chance we ended up with multiple followers pointing to the same ref
 	;This should never happen, but we should try to unwrangle it just in case
-	;We'll only need to clear these out - we've already cleaned up the ref above
+	;We'll only need to clear these out - we've already cleaned up the ref itself in DismissMultiFollower
+	;Of course this is moot on None Actor anyways - d'oh!
+	if (!FollowerActor)
+		return
+	endif
 	FollowerAlias = GetFollowerAlias(FollowerActor)
 	while (FollowerAlias)
 		;Debug.Trace("foxFollow cleaning up duplicate followers... - IsFollower: " + isFollower)
