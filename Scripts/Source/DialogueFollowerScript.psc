@@ -156,11 +156,31 @@ ReferenceAlias function AddFollowerAlias(ObjectReference FollowerRef)
 	int i = 0
 	while (i < Followers.Length)
 		if (Followers[i].ForceRefIfEmpty(FollowerRef))
+			;Add back all our book-learned spells again - no real way to keep track of these when not following
+			;This has the added bonus of retroactively applying to previously dismissed vanilla followers carrying spell tomes
+			(Followers[i] as foxFollowFollowerAliasScript).AddAllBookSpells()
+
+			;Finally, register us for an update so we start doing nifty catchup stuff
+			Followers[i].RegisterForSingleUpdate(InitialUpdateTime)
+
 			return Followers[i]
 		endif
 		i += 1
 	endwhile
 	return None
+endFunction
+
+;Remove follower by alias
+function RemoveFollowerAlias(ReferenceAlias FollowerAlias)
+	;First, cancel any pending update
+	FollowerAlias.UnRegisterForUpdateGameTime()
+	FollowerAlias.UnRegisterForUpdate()
+
+	;Also remove all our book-learned spells - no real way to keep track of these when not following
+	(FollowerAlias as foxFollowFollowerAliasScript).RemoveAllBookSpells()
+
+	;Clear!
+	FollowerAlias.Clear()
 endFunction
 
 ;Attempt to untangle which follower we're talking about
@@ -250,7 +270,7 @@ endFunction
 
 ;Clear our preferred follower if it's set to FollowerActor - called from current followers' OnUpdate
 function ClearPreferredFollowerAlias(Actor FollowerActor)
-	if (PreferredFollowerAlias != None && PreferredFollowerAlias.GetActorRef() == FollowerActor && !MeetsPreferredFollowerAliasConditions(FollowerActor))
+	if (PreferredFollowerAlias && PreferredFollowerAlias.GetActorRef() == FollowerActor && !MeetsPreferredFollowerAliasConditions(FollowerActor))
 		;Debug.Trace("foxFollow ClearPreferredFollowerAlias cleared! - IsFollower: " + IsFollower(FollowerActor))
 		PreferredFollowerAlias = None
 		CommandMode = 0
@@ -329,10 +349,6 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower)
 		return
 	endif
 
-	;Add back all our book-learned spells again - no real way to keep track of these when not following
-	;This has the added bonus of retroactively applying to previously dismissed vanilla followers carrying spell tomes
-	(FollowerAlias as foxFollowFollowerAliasScript).AddAllBookSpells()
-
 	;Check to see if we're at capacity - if so, set both follower counts to 1
 	;This prevents taking on any more followers of either kind until a reference is freed up
 	if (GetNumFollowers() >= Followers.Length)
@@ -344,9 +360,6 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower)
 	if (isFollower)
 		FollowerActor.AddToFaction(FollowerInfoFaction)
 	endif
-
-	;Finally, register us for an update so we start doing nifty catchup stuff
-	FollowerAlias.RegisterForSingleUpdate(InitialUpdateTime)
 endFunction
 function SetFollower(ObjectReference FollowerRef)
 	SetMultiFollower(FollowerRef, true)
@@ -516,15 +529,8 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	DismissMultiFollowerClearAlias(FollowerAlias, FollowerActor, iMessage)
 endFunction
 function DismissMultiFollowerClearAlias(ReferenceAlias FollowerAlias, Actor FollowerActor, int iMessage)
-	;First, cancel any pending update
-	FollowerAlias.UnRegisterForUpdateGameTime()
-	FollowerAlias.UnRegisterForUpdate()
-
-	;Also remove all our book-learned spells - no real way to keep track of these when not following
-	(FollowerAlias as foxFollowFollowerAliasScript).RemoveAllBookSpells()
-
-	;Clear!
-	FollowerAlias.Clear()
+	;Remove that alias!
+	RemoveFollowerAlias(FollowerAlias)
 
 	;Set both counts to 0 so we're ready to accept either follower type again
 	;Per Vanilla - "don't set count to 0 if Companions have replaced follower" (this actually makes sense here)
@@ -543,7 +549,7 @@ function DismissMultiFollowerClearAlias(ReferenceAlias FollowerAlias, Actor Foll
 	FollowerAlias = GetFollowerAlias(FollowerActor)
 	while (FollowerAlias)
 		;Debug.Trace("foxFollow cleaning up duplicate followers... - IsFollower: " + IsFollower(FollowerActor))
-		FollowerAlias.Clear()
+		RemoveFollowerAlias(FollowerAlias)
 		FollowerAlias = GetFollowerAlias(FollowerActor)
 	endwhile
 endFunction

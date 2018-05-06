@@ -37,14 +37,16 @@ event OnUnload()
 endEvent
 
 event OnCombatStateChanged(Actor akTarget, int aeCombatState)
+	Actor ThisActor = Self.GetActorRef()
+
 	if (akTarget == PlayerRef)
-		DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(Self.GetActorRef()), 0, 0)
+		DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(ThisActor), 0, 0)
 	endif
 
 	;HACK Begin registering combat check to fix getting stuck in combat (bug in bleedouts for animals)
 	;This should be bloat-friendly as it will never fire more than once at a time, even if OnActivate is called multiple times in this time frame
 	if (aeCombatState == 1)
-		SetSpeedup(false)
+		SetSpeedup(ThisActor, false)
 		RegisterForSingleUpdate(CombatWaitUpdateTime)
 	endif
 endEvent
@@ -118,7 +120,7 @@ function AddAllBookSpells()
 	Actor ThisActor = Self.GetActorRef()
 	int i = ThisActor.GetNumItems()
 	Book SomeBook = None
-	while i
+	while (i)
 		i -= 1
 		SomeBook = ThisActor.GetNthForm(i) as Book
 		if (SomeBook)
@@ -130,7 +132,7 @@ endFunction
 function RemoveAllBookSpells()
 	int i = LearnedSpellBookList.GetSize()
 	Book SomeBook = None
-	while i
+	while (i)
 		i -= 1
 		SomeBook = LearnedSpellBookList.GetAt(i) as Book
 		if (SomeBook)
@@ -179,7 +181,7 @@ event OnUpdate()
 			ThisActor.StopCombat()
 		endif
 	elseif (ThisActor.IsDoingFavor())
-		SetSpeedup(false)
+		SetSpeedup(ThisActor, false)
 	elseif (ThisActor.GetAV("WaitingForPlayer") == 0)
 		float maxDist = 4096.0
 		if (!PlayerRef.HasLOS(ThisActor))
@@ -189,10 +191,10 @@ event OnUpdate()
 		if (dist > maxDist && !PlayerRef.IsOnMount())
 			float aZ = PlayerRef.GetAngleZ()
 			ThisActor.MoveTo(PlayerRef, -192.0 * Math.Sin(aZ), -192.0 * Math.Cos(aZ), 64.0, true)
-			SetSpeedup(false)
+			SetSpeedup(ThisActor, false)
 			;Debug.Trace("foxFollowActor - initiating hyperjump!")
 		else
-			SetSpeedup(dist > maxDist * 0.5)
+			SetSpeedup(ThisActor, dist > maxDist * 0.5)
 		endif
 
 		RegisterForSingleUpdate(FollowUpdateTime)
@@ -202,8 +204,7 @@ event OnUpdate()
 	RegisterForSingleUpdate(CombatWaitUpdateTime)
 endEvent
 
-function SetSpeedup(bool punchIt)
-	Actor ThisActor = Self.GetActorRef()
+function SetSpeedup(Actor ThisActor, bool punchIt)
 	float SpeedMult = ThisActor.GetAV("SpeedMult")
 	if (punchIt)
 		;This will compound over time until we actually catch up - 2x, 3x, 4x... 88x. lols
