@@ -64,32 +64,49 @@ int CommandMode
 ; 	elseif (control == "Sprint")
 ; 		UnregisterForAllControls()
 ; 		RegisterForControl("Activate")
-; 		DismissFollower()
+; 		DialogueFollower.DismissFollower()
 ; 	elseif (control == "Jump")
 ; 		UnregisterForAllControls()
 ; 		RegisterForControl("Activate")
-; 		DismissAnimal()
+; 		DialogueFollower.DismissAnimal()
 ; 	elseif (control == "Sneak")
 ; 		UnregisterForAllControls()
 ; 		RegisterForControl("Activate")
 ; 		string stuff = ""
 ; 		int i = 0
 ; 		while (i < Followers.Length)
-; 			stuff += Followers[i] + "\n"
+; 			if (i > 0)
+; 				stuff += "\n"
+; 			endif
+; 			stuff += Followers[i]
 ; 			i += 1
 ; 		endwhile
 ; 		Debug.Messagebox(stuff)
 ; 		stuff = ""
 ; 		i = 0
 ; 		while (i < Followers.Length)
+; 			if (i > 0)
+; 				stuff += "\n"
+; 			endif
 ; 			if (Followers[i].GetActorRef())
 ; 				stuff += Followers[i].GetActorRef()
 ; 			else
 ; 				stuff += "None"
 ; 			endif
-; 			stuff += "\n"
 ; 			i += 1
 ; 		endwhile
+; 		Debug.Messagebox(stuff)
+; 		stuff = DialogueFollower.pFollowerAlias + "\n" + DialogueFollower.pAnimalAlias
+; 		if (DialogueFollower.pFollowerAlias.GetActorRef())
+; 			stuff += "\n" + DialogueFollower.pFollowerAlias.GetActorRef()
+; 		else
+; 			stuff += "\nNone"
+; 		endif
+; 		if (DialogueFollower.pAnimalAlias.GetActorRef())
+; 			stuff += "\n" + DialogueFollower.pAnimalAlias.GetActorRef()
+; 		else
+; 			stuff += "\nNone"
+; 		endif
 ; 		Debug.Messagebox(stuff)
 ; 	endif
 ; endEvent
@@ -102,8 +119,8 @@ int CommandMode
 
 ;On the off chance we're actually running this on a new game (DialogueFollower is ever-present!), init stuff!
 event OnInit()
-	;Hey since we're a separate script now this will actually always run on first load - hooray! So display a message only if we're "updating" an existing save
-	CheckForModUpdate(!DialogueFollower.foxFollowDialogueFollower || DialogueFollower.pFollowerAlias.GetActorRef() || DialogueFollower.pAnimalAlias.GetActorRef())
+	;Hey since we're a separate script now this will actually always run on first load - hooray!
+	CheckForModUpdate(false)
 endEvent
 
 ;See if we need to update from an old save (or first run from vanilla save)
@@ -157,6 +174,12 @@ function ModUpdate1()
 		FollowerAlias1.ForceRefTo(FollowerActor)
 		(FollowerAlias1 as foxFollowFollowerAliasScript).AddAllBookSpells()
 	endif
+
+	;Finally clean up our any registered updates on vanilla aliases, as those won't be needed anymore
+	DialogueFollower.pFollowerAlias.UnRegisterForUpdateGameTime()
+	DialogueFollower.pFollowerAlias.UnRegisterForUpdate()
+	DialogueFollower.pAnimalAlias.UnRegisterForUpdateGameTime()
+	DialogueFollower.pAnimalAlias.UnRegisterForUpdate()
 endFunction
 
 ;Attempt to add follower by ref - returns alias if successful
@@ -189,6 +212,10 @@ function RemoveFollowerAlias(ReferenceAlias FollowerAlias)
 
 	;Clear!
 	FollowerAlias.Clear()
+
+	;Make sure our preferred followers are filled with something
+	CheckPreferredFollowerAlias(true)
+	CheckPreferredFollowerAlias(false)
 endFunction
 
 ;Get follower at index
@@ -264,34 +291,52 @@ function SetPreferredFollowerAlias(Actor FollowerActor, int newCommandMode = 0)
 	CommandMode = -newCommandMode
 endFunction
 
-;Clear our preferred follower, and set to first available (so we have something for commands to use - also nice to have vanilla aliases filled for any third party scripts)
-function ResetPreferredFollowerAlias(bool isFollower)
-	;Debug.Trace("foxFollow ResetPreferredFollowerAlias - IsFollower: " + isFollower)
+;Check our preferred follower, setting to first available if empty (so we have something for commands to use - also nice to have vanilla aliases filled for any third party scripts)
+function CheckPreferredFollowerAlias(bool isFollower)
+	ObjectReference FollowerRef = None
 	if (isFollower)
-		DialogueFollower.pFollowerAlias.UnRegisterForUpdateGameTime()
-		DialogueFollower.pFollowerAlias.UnRegisterForUpdate()
-		DialogueFollower.pFollowerAlias.Clear()
+		FollowerRef = DialogueFollower.pFollowerAlias.GetRef()
 	else
-		DialogueFollower.pAnimalAlias.UnRegisterForUpdateGameTime()
-		DialogueFollower.pAnimalAlias.UnRegisterForUpdate()
-		DialogueFollower.pAnimalAlias.Clear()
+		FollowerRef = DialogueFollower.pAnimalAlias.GetRef()
+	endif
+	if (GetFollowerAliasByRef(FollowerRef))
+		return
 	endif
 
 	ReferenceAlias FollowerAlias = GetAnyFollowerAliasByType(isFollower)
 	if (FollowerAlias)
-		Actor FollowerActor = FollowerAlias.GetActorRef()
-		if (FollowerActor)
-			SetPreferredFollowerAlias(FollowerActor)
+		;Debug.Trace("foxFollow CheckPreferredFollowerAlias set new alias - IsFollower: " + isFollower)
+		if (isFollower)
+			DialogueFollower.pFollowerAlias.ForceRefTo(FollowerAlias.GetRef())
+		else
+			DialogueFollower.pAnimalAlias.ForceRefTo(FollowerAlias.GetRef())
+		endif
+	else
+		;Debug.Trace("foxFollow CheckPreferredFollowerAlias cleared - IsFollower: " + isFollower)
+		if (isFollower)
+			DialogueFollower.pFollowerAlias.Clear()
+		else
+			DialogueFollower.pAnimalAlias.Clear()
 		endif
 	endif
 endFunction
 
 ;Clear our preferred follower if it's set to FollowerActor - called from current followers' OnActivate
+;Note: This currently just clears CommandMode since we now keep preferred follower populated at all times - but could be used for actually clearing again at some point...
 function ClearPreferredFollowerAlias(Actor FollowerActor)
 	ReferenceAlias PreferredFollower = GetPreferredFollowerAlias(IsFollower(FollowerActor))
 	if (PreferredFollower && PreferredFollower.GetActorRef() == FollowerActor && !MeetsPreferredFollowerAliasConditions(FollowerActor))
 		;Debug.Trace("foxFollow ClearPreferredFollowerAlias! - IsFollower: " + IsFollower(FollowerActor))
-		CommandMode = 0
+
+		;Only clear CommandMode if the other preferred follower also isn't gabbing
+		PreferredFollower = GetPreferredFollowerAlias(!IsFollower(FollowerActor))
+		if (PreferredFollower)
+			FollowerActor = PreferredFollower.GetActorRef()
+		endif
+		if (!FollowerActor || !MeetsPreferredFollowerAliasConditions(FollowerActor))
+			;Debug.Trace("foxFollow ClearPreferredFollowerAlias clearing CommandMode!")
+			CommandMode = 0
+		endif
 	endif
 endFunction
 
@@ -378,8 +423,8 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower)
 	;Also set our preferred follower while we're here, since we did just interact with this follower
 	if (isFollower)
 		FollowerActor.AddToFaction(FollowerInfoFaction)
-		SetPreferredFollowerAlias(FollowerActor)
 	endif
+	SetPreferredFollowerAlias(FollowerActor)
 endFunction
 
 ;Version of FollowerWait / FollowerFollow that handles multiple followers
@@ -420,6 +465,11 @@ endFunction
 
 ;Version of DismissFollower that handles multiple followers
 function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int iMessage = 0, int iSayLine = 1)
+	;If a previous dismissal is stalling from saying a line, just ignore this request - we can try to wait, but then we just run into threading issues and it's not worth it
+	if (DialogueFollower.iFollowerDismiss)
+		return
+	endif
+
 	;This gets tricky because we very well may have no idea who we're actually dismissing
 	;However, if we're commanding multiple followers, this is fine and we'll actually force a None FollowerAlias...
 	if (CommandMode < 0)
@@ -455,9 +505,9 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 		return
 	endif
 
+	;If we don't exist or we're dead, time for express dismissal! Hiyaa1
 	Actor FollowerActor = FollowerAlias.GetActorRef()
 	if (!FollowerActor || FollowerActor.IsDead())
-		;Express dismissal! Hiyaa1
 		;Fairly standard FollowerAliasScript.OnDeath / TrainedAnimalScript.OnDeath... More or less
 		if (FollowerActor)
 			FollowerActor.RemoveFromFaction(DialogueFollower.pCurrentHireling)
@@ -467,6 +517,9 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 		DismissMultiFollowerClearAlias(FollowerAlias, FollowerActor, iMessage)
 		return
 	endif
+
+	;Oops we should probably reset SpeedMult hehe
+	(FollowerAlias as foxFollowFollowerAliasScript).SetSpeedup(FollowerActor, false)
 
 	;Make sure we're actually a follower (might have gotten mixed up somehow - could happen if we try to trick the script by quickly talking to the wrong type)
 	if (IsFollower(FollowerActor) != isFollower)
@@ -519,7 +572,7 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 			DialogueFollower.iFollowerDismiss = 1
 			FollowerActor.EvaluatePackage()
 			;Per Vanilla - "Wait for follower to say line"
-			Utility.Wait(2)
+			Utility.Wait(2.0)
 		endif
 		DialogueFollower.iFollowerDismiss = 0
 	elseif (iMessage != -1)
@@ -556,11 +609,4 @@ function DismissMultiFollowerClearAlias(ReferenceAlias FollowerAlias, Actor Foll
 		RemoveFollowerAlias(FollowerAlias)
 		FollowerAlias = GetFollowerAliasByRef(FollowerActor)
 	endwhile
-
-	;Finally, now that all that's done, if we're the preferred follower of our type, try to set someone else
-	bool isFollower = IsFollower(FollowerActor)
-	FollowerAlias = GetPreferredFollowerAlias(isFollower)
-	if (FollowerAlias && FollowerAlias.GetActorRef() == FollowerActor)
-		ResetPreferredFollowerAlias(isFollower)
-	endif
 endFunction
