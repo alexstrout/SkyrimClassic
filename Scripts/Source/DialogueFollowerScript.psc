@@ -27,6 +27,11 @@ Ammo Property FollowerIronArrow Auto
 
 foxFollowDialogueFollowerScript Property foxFollowDialogueFollower Auto
 
+;On the off chance we're actually running this on a new game (DialogueFollower is ever-present!), signal to foxFollowDialogueFollower to hide its update message
+event OnInit()
+	foxFollowDialogueFollower.foxFollowVer = -1
+endEvent
+
 function SetFollower(ObjectReference FollowerRef)
 	foxFollowDialogueFollower.SetMultiFollower(FollowerRef, true)
 endFunction

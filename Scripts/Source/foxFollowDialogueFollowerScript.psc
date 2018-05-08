@@ -117,30 +117,33 @@ int CommandMode
 ; 	endif
 ; endEvent
 
-;On the off chance we're actually running this on a new game (DialogueFollower is ever-present!), init stuff!
+;Init our stuff - hey since we're a separate script now this will actually always run on first load, hooray!
 event OnInit()
-	;Hey since we're a separate script now this will actually always run on first load - hooray!
-	CheckForModUpdate(false)
+	CheckForModUpdate()
 endEvent
 
 ;See if we need to update from an old save (or first run from vanilla save)
 ;Currently checked on OnInit, SetMultiFollower, and any current followers' OnActivate
-function CheckForModUpdate(bool ShowUpdateMessage = true)
+function CheckForModUpdate()
 	if (foxFollowVer < foxFollowScriptVer)
 		if (foxFollowVer < 1)
 			ModUpdate1()
 		endif
 
 		;Ready to rock!
-		if (ShowUpdateMessage)
-			Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + foxFollowVer + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
-		endif
-		foxFollowVer = foxFollowScriptVer
+		RegisterForSingleUpdate(2.0)
 	endif
 
 	;Useful debug hotkeys
 	;RegisterForControl("Activate")
 endFunction
+event OnUpdate()
+	;Possibly display update message - will only be displayed on existing saves, foxFollowVer set to -1 on new game from DialogueFollowerScript
+	if (foxFollowVer != -1)
+		Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + foxFollowVer + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
+	endif
+	foxFollowVer = foxFollowScriptVer
+endEvent
 function ModUpdate1()
 	;Telling our modified DialogueFollower to point to us, if it's somehow None (existing saves should pull the CK value, but PlayerRef somehow ended up None in foxPet)
 	if (!DialogueFollower.foxFollowDialogueFollower)
