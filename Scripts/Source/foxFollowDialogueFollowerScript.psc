@@ -102,7 +102,8 @@ int CommandMode
 
 ;On the off chance we're actually running this on a new game (DialogueFollower is ever-present!), init stuff!
 event OnInit()
-	CheckForModUpdate(false)
+	;Hey since we're a separate script now this will actually always run on first load - hooray! So display a message only if we're "updating" an existing save
+	CheckForModUpdate(!DialogueFollower.foxFollowDialogueFollower || DialogueFollower.pFollowerAlias.GetActorRef() || DialogueFollower.pAnimalAlias.GetActorRef())
 endEvent
 
 ;See if we need to update from an old save (or first run from vanilla save)
@@ -124,7 +125,12 @@ function CheckForModUpdate(bool ShowUpdateMessage = true)
 	;RegisterForControl("Activate")
 endFunction
 function ModUpdate1()
-	;Init our stuff, grabbing existing refs from vanilla save
+	;Telling our modified DialogueFollower to point to us, if it's somehow None (existing saves should pull the CK value, but PlayerRef somehow ended up None in foxPet)
+	if (!DialogueFollower.foxFollowDialogueFollower)
+		DialogueFollower.foxFollowDialogueFollower = Self
+	endif
+
+	;Init our stuff!
 	Followers = new ReferenceAlias[10]
 	Followers[0] = FollowerAlias0
 	Followers[1] = FollowerAlias1
@@ -136,7 +142,6 @@ function ModUpdate1()
 	Followers[7] = FollowerAlias7
 	Followers[8] = FollowerAlias8
 	Followers[9] = FollowerAlias9
-
 	CommandMode = 0
 
 	;Also add existing follower follower (as opposed to animal follower) to "info" faction
@@ -237,7 +242,7 @@ ReferenceAlias function GetPreferredFollowerAlias(bool isFollower)
 	else
 		FollowerActor = DialogueFollower.pAnimalAlias.GetActorRef()
 	endif
-	if (FollowerActor)
+	if (FollowerActor && IsFollower(FollowerActor) == isFollower)
 		;Debug.Trace("foxFollow got single preffered alias - IsFollower: " + isFollower)
 		return GetFollowerAliasByRef(FollowerActor)
 	endif
@@ -390,6 +395,7 @@ function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, 
 	endif
 
 	;If we can't figure out a specific follower, make everyone wait / follow - either we're in CommandMode, or we've been called from a quest or something
+	;This should actually never happen now (unless we're in CommandMode of course), since we make sure our preferred follower is always filled
 	if (!FollowerAlias)
 		int i = 0
 		while (i < Followers.Length)
@@ -432,6 +438,7 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	endif
 
 	;If we can't figure out a specific follower, just dismiss everyone of our follow type - either we're in CommandMode, or we've been called from a quest or something
+	;This should actually never happen now (unless we're in CommandMode of course), since we make sure our preferred follower is always filled
 	if (!FollowerAlias)
 		int i = 0
 		while (i < Followers.Length)
@@ -553,7 +560,7 @@ function DismissMultiFollowerClearAlias(ReferenceAlias FollowerAlias, Actor Foll
 	;Finally, now that all that's done, if we're the preferred follower of our type, try to set someone else
 	bool isFollower = IsFollower(FollowerActor)
 	FollowerAlias = GetPreferredFollowerAlias(isFollower)
-	if (FollowerAlias.GetActorRef() == FollowerActor)
+	if (FollowerAlias && FollowerAlias.GetActorRef() == FollowerActor)
 		ResetPreferredFollowerAlias(isFollower)
 	endif
 endFunction
