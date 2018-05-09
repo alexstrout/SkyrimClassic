@@ -75,10 +75,7 @@ function AddBookSpell(Book SomeBook, bool ShowMessage = true)
 			if (ShowMessage)
 				;Debug.MessageBox("Follower learning " + BookSpell.GetName()) ;Temp until make message durr
 				DialogueFollower.FollowerLearnSpellMessage.Show()
-				if (LastFollowerLearnSpellSoundInstanceID)
-					Sound.StopInstance(LastFollowerLearnSpellSoundInstanceID)
-				endif
-				LastFollowerLearnSpellSoundInstanceID = DialogueFollower.FollowerLearnSpellSound.Play(ThisActor)
+				LastFollowerLearnSpellSoundInstanceID = DialogueFollower.FollowerLearnSpellSound.Play(PlayerRef)
 			endif
 		;else
 		;	Debug.MessageBox("Follower already knows " + BookSpell.GetName() + "!")
@@ -105,10 +102,7 @@ function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCond
 			if (ShowMessage)
 				;Debug.MessageBox("Follower forgetting " + BookSpell.GetName()) ;Temp until make message durr
 				DialogueFollower.FollowerForgetSpellMessage.Show()
-				if (LastFollowerForgetSpellSoundInstanceID)
-					Sound.StopInstance(LastFollowerForgetSpellSoundInstanceID)
-				endif
-				LastFollowerForgetSpellSoundInstanceID = DialogueFollower.FollowerForgetSpellSound.Play(ThisActor)
+				LastFollowerForgetSpellSoundInstanceID = DialogueFollower.FollowerForgetSpellSound.Play(PlayerRef)
 			endif
 		endif
 	endif
