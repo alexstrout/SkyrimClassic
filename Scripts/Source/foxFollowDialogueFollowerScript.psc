@@ -119,7 +119,7 @@ int CommandMode
 
 ;Init our stuff - hey since we're a separate script now this will actually always run on first load, hooray!
 event OnInit()
-	CheckForModUpdate()
+	RegisterForSingleUpdate(2.0)
 endEvent
 
 ;See if we need to update from an old save (or first run from vanilla save)
@@ -130,19 +130,20 @@ function CheckForModUpdate()
 			ModUpdate1()
 		endif
 
+		;Possibly display update message - will only be displayed on existing saves, foxFollowVer set to -1 on new game from DialogueFollowerScript
+		if (foxFollowVer != -1)
+			Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + foxFollowVer + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
+		endif
+
 		;Ready to rock!
-		RegisterForSingleUpdate(2.0)
+		foxFollowVer = foxFollowScriptVer
 	endif
 
 	;Useful debug hotkeys
 	;RegisterForControl("Activate")
 endFunction
 event OnUpdate()
-	;Possibly display update message - will only be displayed on existing saves, foxFollowVer set to -1 on new game from DialogueFollowerScript
-	if (foxFollowVer != -1)
-		Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + foxFollowVer + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
-	endif
-	foxFollowVer = foxFollowScriptVer
+	CheckForModUpdate()
 endEvent
 function ModUpdate1()
 	;Telling our modified DialogueFollower to point to us, if it's somehow None (existing saves should pull the CK value, but PlayerRef somehow ended up None in foxPet)
@@ -164,6 +165,7 @@ function ModUpdate1()
 	Followers[9] = FollowerAlias9
 	CommandMode = 0
 
+	;Grab our existing follower/animal followers from vanilla save
 	;Also add existing follower follower (as opposed to animal follower) to "info" faction
 	;Also retroactively learn spells from any spell tomes we might have?
 	Actor FollowerActor = DialogueFollower.pFollowerAlias.GetActorRef()
