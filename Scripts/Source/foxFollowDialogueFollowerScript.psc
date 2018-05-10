@@ -125,18 +125,19 @@ endEvent
 ;See if we need to update from an old save (or first run from vanilla save)
 ;Currently checked on OnInit, SetMultiFollower, and any current followers' OnActivate
 function CheckForModUpdate()
-	if (foxFollowVer < foxFollowScriptVer)
-		if (foxFollowVer < 1)
+	;Set foxFollowVer ASAP to avoid mod updates being run twice from two threads
+	int ver = foxFollowVer
+	foxFollowVer = foxFollowScriptVer
+	if (ver < foxFollowScriptVer)
+		if (ver < 1)
 			ModUpdate1()
 		endif
 
-		;Possibly display update message - will only be displayed on existing saves, foxFollowVer set to -1 on new game from DialogueFollowerScript
-		if (foxFollowVer != -1)
-			Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + foxFollowVer + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
-		endif
-
 		;Ready to rock!
-		foxFollowVer = foxFollowScriptVer
+		;Possibly display update message - will only be displayed on existing saves, foxFollowVer set to -1 on new game from DialogueFollowerScript
+		if (ver != -1)
+			Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + ver + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
+		endif
 	endif
 
 	;Useful debug hotkeys
@@ -166,18 +167,14 @@ function ModUpdate1()
 	CommandMode = 0
 
 	;Grab our existing follower/animal followers from vanilla save
-	;Also add existing follower follower (as opposed to animal follower) to "info" faction
-	;Also retroactively learn spells from any spell tomes we might have?
+	;Just use SetMultiFollower with a ForcedDestAlias to accomplish this - will safely ignore CheckForModUpdate
 	Actor FollowerActor = DialogueFollower.pFollowerAlias.GetActorRef()
 	if (FollowerActor)
-		FollowerActor.AddToFaction(FollowerInfoFaction)
-		FollowerAlias0.ForceRefTo(FollowerActor)
-		(FollowerAlias0 as foxFollowFollowerAliasScript).AddAllBookSpells()
+		SetMultiFollower(FollowerActor, true, FollowerAlias0)
 	endif
 	FollowerActor = DialogueFollower.pAnimalAlias.GetActorRef()
 	if (FollowerActor)
-		FollowerAlias1.ForceRefTo(FollowerActor)
-		(FollowerAlias1 as foxFollowFollowerAliasScript).AddAllBookSpells()
+		SetMultiFollower(FollowerActor, false, FollowerAlias1)
 	endif
 
 	;Finally clean up our any registered updates on vanilla aliases, as those won't be needed anymore
@@ -191,19 +188,26 @@ endFunction
 ReferenceAlias function AddFollowerAlias(ObjectReference FollowerRef)
 	int i = 0
 	while (i < Followers.Length)
-		if (Followers[i].ForceRefIfEmpty(FollowerRef))
-			;Add back all our book-learned spells again - no real way to keep track of these when not following
-			;This has the added bonus of retroactively applying to previously dismissed vanilla followers carrying spell tomes
-			(Followers[i] as foxFollowFollowerAliasScript).AddAllBookSpells()
-
-			;Finally, register us for an update so we start doing nifty catchup stuff
-			Followers[i].RegisterForSingleUpdate(InitialUpdateTime)
-
+		if (SetFollowerAlias(Followers[i], FollowerRef))
 			return Followers[i]
 		endif
 		i += 1
 	endwhile
 	return None
+endFunction
+
+;Set follower alias by ref - returns true if successful
+bool function SetFollowerAlias(ReferenceAlias FollowerAlias, ObjectReference FollowerRef)
+	if (FollowerAlias.ForceRefIfEmpty(FollowerRef))
+		;Add back all our book-learned spells again - no real way to keep track of these when not following
+		;This has the added bonus of retroactively applying to previously dismissed vanilla followers carrying spell tomes
+		(FollowerAlias as foxFollowFollowerAliasScript).AddAllBookSpells()
+
+		;Finally, register us for an update so we start doing nifty catchup stuff
+		FollowerAlias.RegisterForSingleUpdate(InitialUpdateTime)
+		return true
+	endif
+	return false
 endFunction
 
 ;Remove follower by alias
@@ -377,25 +381,58 @@ int function GetNumFollowers()
 	return outNumFollowers + outNumAnimals
 endFunction
 
+;Update follower count (whether we can recruit new followers) based on how many followers we actually have - returns true if at capacity
+;Currently checked on SetMultiFollower, DismissMultiFollowerClearAlias, and any current followers' OnActivate
+bool function UpdateFollowerCount()
+	if (GetNumFollowers() >= Followers.Length)
+		DialogueFollower.pPlayerFollowerCount.SetValue(1)
+		DialogueFollower.pPlayerAnimalCount.SetValue(1)
+		return true
+	endif
+	DialogueFollower.pPlayerFollowerCount.SetValue(0)
+	DialogueFollower.pPlayerAnimalCount.SetValue(0)
+	return false
+endFunction
+
 ;Version of SetFollower that handles multiple followers
-function SetMultiFollower(ObjectReference FollowerRef, bool isFollower)
+function SetMultiFollower(ObjectReference FollowerRef, bool isFollower, ReferenceAlias ForcedDestAlias = None)
 	;Make sure our Follower array is good to go!
-	CheckForModUpdate()
+	;If we have a ForcedDestAlias, we're probably coming from CheckForModUpdate
+	if (!ForcedDestAlias)
+		CheckForModUpdate()
+	endif
 
 	;There's a chance some follow scripts might get confused and attempt to add us twice
 	;e.g. foxPet when activated while favors active (oops!)
 	;This will be difficult to recover from later, so try to catch this here
+	;Note that this will also clear any other conflicts if they somehow exist, thanks to DismissMultiFollowerClearAlias
 	ReferenceAlias FollowerAlias = GetFollowerAliasByRef(FollowerRef)
 	if (FollowerAlias)
 		;Debug.Trace("foxFollow attempted to add follower that already existed! Oops... - IsFollower: " + isFollower)
 		DismissMultiFollower(FollowerAlias, isFollower)
 	endif
 
-	;Fairly standard DialogueFollowerScript.SetFollower code
+	;Do we exist?
 	Actor FollowerActor = FollowerRef as Actor
 	if (!FollowerActor)
 		return
 	endif
+
+	;Attempt to assign the appropriate reference appropriately - do this first so we can safely bail if something goes wrong
+	if (ForcedDestAlias && SetFollowerAlias(ForcedDestAlias, FollowerActor))
+		FollowerAlias = ForcedDestAlias
+	else
+		if (ForcedDestAlias)
+			Debug.MessageBox("Couldn't set ForcedDestAlias! Oops\nUsing first available instead...\nIsFollower: " + isFollower)
+		endif
+		FollowerAlias = AddFollowerAlias(FollowerActor)
+	endif
+	if (!FollowerAlias)
+		Debug.MessageBox("Added too many followers! Oops\nNo available slots. Skipping...\nIsFollower: " + isFollower)
+		return
+	endif
+
+	;Fairly standard DialogueFollowerScript.SetFollower code follows
 	FollowerActor.RemoveFromFaction(DialogueFollower.pDismissedFollower)
 	if (FollowerActor.GetRelationshipRank(PlayerRef) < 3 && FollowerActor.GetRelationshipRank(PlayerRef) >= 0)
 		FollowerActor.SetRelationshipRank(PlayerRef, 3)
@@ -410,19 +447,9 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower)
 	;However, only allow favors if we aren't recruiting an animal (animals themselves are of course free to override this after SetAnimal(), e.g. foxPet)
 	FollowerActor.SetPlayerTeammate(abCanDoFavor = isFollower)
 
-	;Attempt to assign the appropriate reference appropriately
-	FollowerAlias = AddFollowerAlias(FollowerActor)
-	if (!FollowerAlias)
-		Debug.MessageBox("Added too many followers! Oops\nIsFollower: " + isFollower)
-		return
-	endif
-
 	;Check to see if we're at capacity - if so, set both follower counts to 1
 	;This prevents taking on any more followers of either kind until a reference is freed up
-	if (GetNumFollowers() >= Followers.Length)
-		DialogueFollower.pPlayerFollowerCount.SetValue(1)
-		DialogueFollower.pPlayerAnimalCount.SetValue(1)
-	endif
+	UpdateFollowerCount()
 
 	;If we're a follower and not an animal, add to "info" faction so we know what type we are later
 	;Also set our preferred follower while we're here, since we did just interact with this follower
@@ -595,11 +622,7 @@ function DismissMultiFollowerClearAlias(ReferenceAlias FollowerAlias, Actor Foll
 	RemoveFollowerAlias(FollowerAlias)
 
 	;Set both counts to 0 so we're ready to accept either follower type again
-	;Per Vanilla - "don't set count to 0 if Companions have replaced follower" (this actually makes sense here)
-	if (iMessage != 2)
-		DialogueFollower.pPlayerFollowerCount.SetValue(0)
-		DialogueFollower.pPlayerAnimalCount.SetValue(0)
-	endif
+	UpdateFollowerCount()
 
 	;Finally, there's a chance we ended up with multiple followers pointing to the same ref
 	;This should never happen, but we should try to unwrangle it just in case

@@ -146,6 +146,7 @@ event OnActivate(ObjectReference akActivator)
 	if (akActivator == PlayerRef)
 		;Debug.Trace("foxFollowActor - activated by Player! :D")
 		DialogueFollower.CheckForModUpdate()
+		DialogueFollower.UpdateFollowerCount()
 		int commandMode = 0
 		if (Input.IsKeyPressed(Input.GetMappedKey("Sprint")))
 			commandMode = 1
