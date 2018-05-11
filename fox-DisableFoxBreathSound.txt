@@ -1,0 +1,10 @@
+Disables the idle breathing sound on foxes.
+
+Intended to help keep one's sanity when using Kitt or Sola as a pet:
+http://steamcommunity.com/sharedfiles/filedetails/?id=13413
+
+However, this could also just be used on its own if this sound particularly bothers you.
+
+Revision History:
+r1:
+-- Initial release.
