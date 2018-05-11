@@ -497,11 +497,6 @@ endFunction
 
 ;Version of DismissFollower that handles multiple followers
 function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int iMessage = 0, int iSayLine = 1)
-	;If a previous dismissal is stalling from saying a line, just ignore this request - we can try to wait, but then we just run into threading issues and it's not worth it
-	if (DialogueFollower.iFollowerDismiss)
-		return
-	endif
-
 	;This gets tricky because we very well may have no idea who we're actually dismissing
 	;However, if we're commanding multiple followers, this is fine and we'll actually force a None FollowerAlias...
 	if (CommandMode < 0)
@@ -560,6 +555,10 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	endif
 	FollowerActor.RemoveFromFaction(FollowerInfoFaction)
 
+	;TODO Tell our alias script whether we're a follower or not so we don't have to keep calling IsFollower
+	;Could likely replace FollowerInfoFaction with this? Might be cleaner and would require no Actor loaded
+	;(FollowerAlias as foxFollowFollowerAliasScript).IsFollower = isFollower
+
 	;These things from DialogueFollowerScript.DismissFollower we would like to run on both followers and animals
 	FollowerActor.StopCombatAlarm()
 	FollowerActor.SetPlayerTeammate(false)
@@ -604,7 +603,8 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 			DialogueFollower.iFollowerDismiss = 1
 			FollowerActor.EvaluatePackage()
 			;Per Vanilla - "Wait for follower to say line"
-			Utility.Wait(2.0)
+			;We don't need to wait 2 seconds though
+			Utility.Wait(0.5)
 		endif
 		DialogueFollower.iFollowerDismiss = 0
 	elseif (iMessage != -1)
