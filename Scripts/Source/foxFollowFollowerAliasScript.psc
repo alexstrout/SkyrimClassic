@@ -206,18 +206,23 @@ event OnUpdate()
 endEvent
 
 function SetSpeedup(Actor ThisActor, bool punchIt)
-	float SpeedMult = ThisActor.GetAV("SpeedMult")
+	float speedMult = ThisActor.GetAV("SpeedMult")
 	if (punchIt)
 		;This will compound over time until we actually catch up - 2x, 3x, 4x... 88x. lols
-		if (SpeedMult > 8800)
+		if (speedMult > 8800)
 			return
 		endif
 		ThisActor.ModAV("SpeedMult", 100)
 		ThisActor.ModAV("CarryWeight", 1) ;CarryWeight must be adjusted for SpeedMult to apply
-		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + ThisActor.GetAV("SpeedMult"))
-	elseif (SpeedMult > 100)
+		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + speedMult)
+	else
+		float baseMult = ThisActor.GetBaseAV("SpeedMult")
+		if (speedMult <= baseMult)
+			return
+		endif
+
 		;Using ModAV and ForceAV doesn't change BaseAV, so we can safely look those up to reset to previous values - appears to work across saves
-		ThisActor.ForceAV("SpeedMult", ThisActor.GetBaseAV("SpeedMult"))
+		ThisActor.ForceAV("SpeedMult", baseMult)
 		ThisActor.ForceAV("CarryWeight", ThisActor.GetBaseAV("CarryWeight"))
 		;Debug.Trace("foxFollowActor - dropping to impulse power")
 	endif
