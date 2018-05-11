@@ -1,9 +1,9 @@
 Adds Kitt and Sola, two simple pet foxes, to Dragonsreach.
 
 [h1]Usage[/h1]
-Simply approach either fox and talk, and they'll be recruited to your party.
+Simply approach and talk to either fox, and they'll be recruited into your party.
 If you already have an animal following, that animal will be dismissed.
-Either fox will return to Dragonsreach when dismissed, and can be added recruited at any time.
+Either fox will return to Dragonsreach when dismissed, and can be recruited again at any time.
 
 [h1]Additional Information[/h1]
 Both foxes level with the player to 50, like other vanilla followers.
@@ -20,8 +20,8 @@ Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scr
 http://steamcommunity.com/sharedfiles/filedetails/?id=10172
 
 [h1]Uninstall Steps[/h1]
-Simply dismiss your fox if present in your party, then remove the plugin.
-Optionally, use ReSaver (or similar) to remove any leftover references in your savegame:
+Simply dismiss your fox if present in your party, then remove the plugin as normal.
+Optionally, use ReSaver (or similar) to remove any leftover references in your save:
 https://www.nexusmods.com/skyrim/mods/76776
 
 [h1]Known Issues[/h1]
