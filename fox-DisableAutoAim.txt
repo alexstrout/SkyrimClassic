@@ -1,3 +1,5 @@
+No Auto-Aim
+------
 Disables archery auto-aiming.
 
 [h1]Additional Information[/h1]
@@ -11,7 +13,7 @@ https://bethesda.net/en/mods/SKYRIM/mod-detail/3031493
 Simply remove the plugin as normal; no save cleaning necessary.
 
 (autoaim, auto aim, auto-aim, whatever)
-
+------
 Revision History:
 r3:
 -- Fixed the issue where follower commands (holding interact on your follower) wouldn't function, due to this plugin needlessly setting fAutoAimMaxDistance to 0. Credit for this fix goes to Ricochet Saw; check out his archery plugin here: http://steamcommunity.com/sharedfiles/filedetails/?id=71452193

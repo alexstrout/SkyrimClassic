@@ -1,0 +1,57 @@
+TODO:
+-- Make sure SetSpeedup doesn't blow away valid modifiers for SpeedMult and CarryWeight (more worried about CarryWeight)
+	-- This should probably be a native MAGEffect instead
+
+Multi-Follower Spell Tome Learning
+------
+Implements simple multi-follower support, with spell tome learning and catch-up / teleporting.
+Supports any follower (or animal) that uses the vanilla DialogueFollower system.
+
+[h1]Requirements[/h1]
+Requires SKSE: http://skse.silverlock.org/
+
+[h1]Usage[/h1]
+Recruit and otherwise use followers as normal. Currently, a maximum of 10 may be recruited.
+Vanilla followers from an existing save will be "imported" automatically.
+
+While in your party, followers can automatically use spells from any spell tome in their inventory.
+To teach or un-teach spells, simply trade spell tomes with your follower.
+
+To command all followers at once, hold your "Sprint" key while beginning dialogue with a follower.
+
+[h1]Additional Information[/h1]
+Fully supports animal followers too! (provided they use the vanilla DialogueFollower system)
+If you attempt to recruit more than 10 followers, you will get a
+
+Catch-up / teleporting is automatic, based on distance and line-of-sight.
+When lagging behind, they will continually increase their SpeedMult until they catch up.
+If too far, they will instead automatically teleport behind you, unless you're riding a mount.
+
+Spell tome learning avoids manipulating any spells a follower already knows from vanilla.
+
+[h1]Compatibility[/h1]
+Should be compatible with anything that doesn't modify DialogueFollower or DialogueFollowerScript.
+
+[h1]Uninstall Steps[/h1]
+Dismiss all followers in your party (very important!), then remove the plugin as normal.
+Optionally, use ReSaver (or similar) to remove any leftover references in your save:
+https://www.nexusmods.com/skyrim/mods/76776
+
+Warning: If you don't dismiss all followers before removing the plugin, they will permanently remember any spells learned from spell tomes, and may be permanently stuck in a follow state. Please avoid doing this!
+
+[h1]Known Issues[/h1]
+None currently! :)
+
+[h1]Acknowledgements[/h1]
+NorthStar's Followers Keep Up:
+http://steamcommunity.com/sharedfiles/filedetails/?id=10172
+The catch-up / teleport This plugin's functionality heavily influenced my catch-up / teleporting solution,
+
+TheTalkieToaster's Companion Share & Recruit:
+https://steamcommunity.com/sharedfiles/filedetails/?id=119922465
+https://www.nexusmods.com/skyrim/mods/29836
+I used the original Oblivion CSR for years, and can't imagine going back and playing Oblivion without it. The Skyrim version is pretty rad too, and deserves a mention!
+------
+Revision History:
+r1:
+-- Initial release.

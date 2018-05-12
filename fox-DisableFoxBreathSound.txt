@@ -1,3 +1,5 @@
+No Idle Fox Breathing Sounds
+------
 Disables the idle breathing sound on foxes.
 
 [h1]Additional Information[/h1]
@@ -8,7 +10,7 @@ However, this could also just be used on its own if this sound particularly both
 
 [h1]Uninstall Steps[/h1]
 Simply remove the plugin as normal; no save cleaning necessary.
-
+------
 Revision History:
 r1:
 -- Initial release.
