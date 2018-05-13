@@ -9,7 +9,7 @@ Either fox will return to Dragonsreach when dismissed, and can be recruited agai
 
 [h1]Additional Information[/h1]
 Both foxes level with the player to 50, like other vanilla followers.
-They are also marked as essential (bleedout state at 0 health).
+They otherwise have normal stats, but are marked as essential (bleedout state at 0 health).
 
 Kitt, the red fox, is the bolder of the two and tanks Dragons like a champ.
 Sola, the snow fox, is less aggressive, but possesses a snow fox's normal frost resistance.
@@ -34,6 +34,9 @@ https://www.nexusmods.com/skyrim/mods/76776
 The bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
 ------
 Revision History:
+r12:
+-- Minor script cleanup
+
 r11:
 -- Improved compatibility with multi-follower frameworks (activating a fox no longer attempts to add it to the party if its "teammate" status is already set, or if it already has available dialogue)
 -- Fixed script's "None" PlayerRef on old saves (script will fix if necessary upon activating a fox)
