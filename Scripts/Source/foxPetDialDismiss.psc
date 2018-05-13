@@ -8,11 +8,11 @@ Actor akSpeaker = akSpeakerRef as Actor
 ;BEGIN CODE
 (pDialogueFollower as DialogueFollowerScript).DismissAnimal()
 akSpeaker.SetPlayerTeammate(false)
-akSpeaker.SetAV("WaitingForPlayer", 0)
+akSpeaker.SetActorValue("WaitingForPlayer", 0)
 ;END CODE
 EndFunction
 ;END FRAGMENT
 
 ;END FRAGMENT CODE - Do not edit anything between this and the begin comment
 
-Quest Property pDialogueFollower  Auto  
+Quest Property pDialogueFollower  Auto

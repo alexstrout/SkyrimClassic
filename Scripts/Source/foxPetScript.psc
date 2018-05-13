@@ -17,7 +17,7 @@ function foxPetAddPet()
 
 	;Lockpicking is tampered with in SetAnimal by vanilla scripts, so store it to be fixed later
 	;It could already be 0 if pet was hired in previous versions - however, OnActivate should fix this up
-	float tempAV = ThisActor.GetAV("Lockpicking")
+	float tempAV = ThisActor.GetBaseActorValue("Lockpicking")
 
 	DialogueFollower.SetAnimal(Self)
 	ThisActor.SetPlayerTeammate(true, true)
@@ -27,7 +27,7 @@ function foxPetAddPet()
 	AnimalNameAlias.Clear()
 
 	;Revert Lockpicking to whatever it was before SetAnimal tampered with it
-	ThisActor.SetAV("Lockpicking", tempAV)
+	ThisActor.SetActorValue("Lockpicking", tempAV)
 endFunction
 
 function foxPetRemovePet(Actor ThatActor = None)
@@ -42,7 +42,7 @@ function foxPetRemovePet(Actor ThatActor = None)
 	endif
 	DialogueFollower.DismissAnimal()
 	ThatActor.SetPlayerTeammate(false)
-	ThatActor.SetAV("WaitingForPlayer", 0)
+	ThatActor.SetActorValue("WaitingForPlayer", 0)
 endFunction
 
 event OnCombatStateChanged(Actor akTarget, int aeCombatState)
@@ -71,7 +71,7 @@ event OnActivate(ObjectReference akActivator)
 	;Also fix 0 lockpicking on old saves caused by vanilla SetAnimal (doesn't really matter, but should be done anyway)
 	;Also for some reason PlayerRef is None on old saves...?
 	;This should also fix very old pets that are still set as a teammate even though they were dismissed
-	if (!PlayerRef || ThisActor.GetBaseAV("Lockpicking") == 0)
+	if (!PlayerRef || ThisActor.GetBaseActorValue("Lockpicking") == 0)
 		foxPetScriptUpdatingMessage.Show()
 		if (!PlayerRef)
 			PlayerRef = Game.GetPlayer()
