@@ -46,6 +46,8 @@ Message Property FollowerLearnSpellMessage Auto
 Message Property FollowerForgetSpellMessage Auto
 Message Property FollowerCommandModeMessage Auto
 
+Spell Property FollowerSpeedAbility Auto
+
 int Property foxFollowVer Auto
 int Property foxFollowScriptVer = 1 AutoReadOnly
 
@@ -441,7 +443,7 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower, Referenc
 	;Per Vanilla - "don't allow lockpicking"
 	;However, we'll allow this as we're too lazy to restore it after, and besides, who cares?
 	;if (!isFollower)
-	;	FollowerActor.SetAV("Lockpicking", 0)
+	;	FollowerActor.SetActorValue("Lockpicking", 0)
 	;endif
 
 	;However, only allow favors if we aren't recruiting an animal (animals themselves are of course free to override this after SetAnimal(), e.g. foxPet)
@@ -485,7 +487,7 @@ function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, 
 		return
 	endif
 
-	FollowerAlias.GetActorRef().SetAV("WaitingForPlayer", mode)
+	FollowerAlias.GetActorRef().SetActorValue("WaitingForPlayer", mode)
 	if (mode > 0)
 		;SetObjectiveDisplayed(10, abforce = true)
 		FollowerAlias.RegisterForSingleUpdateGameTime(WaitAroundForPlayerGameTime)
@@ -562,7 +564,7 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	;These things from DialogueFollowerScript.DismissFollower we would like to run on both followers and animals
 	FollowerActor.StopCombatAlarm()
 	FollowerActor.SetPlayerTeammate(false)
-	FollowerActor.SetAV("WaitingForPlayer", 0)
+	FollowerActor.SetActorValue("WaitingForPlayer", 0)
 
 	;Per Vanilla - "PATCH 1.9: 77615: remove unplayable hunting bow when follower is dismissed"
 	;Added in additional safety checks - may not be set on old scripts

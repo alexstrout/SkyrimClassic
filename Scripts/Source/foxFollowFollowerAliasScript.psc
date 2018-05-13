@@ -12,6 +12,8 @@ foxFollowDialogueFollowerScript Property DialogueFollower Auto
 Actor Property PlayerRef Auto
 FormList Property LearnedSpellBookList Auto
 
+float FollowerSpeedAbilitySpeedMult
+
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
 float Property FollowUpdateTime = 4.5 AutoReadOnly
 float Property DialogWaitTime = 6.0 AutoReadOnly
@@ -25,7 +27,7 @@ event OnUpdateGameTime()
 	;Per Vanilla - "kill the update if the follower isn't waiting anymore"
 	;Not needed as we use RegisterForSingleUpdateGameTime instead
 	;UnRegisterForUpdateGameTime()
-	if (ThisActor.GetAV("WaitingForPlayer") == 1)
+	if (ThisActor.GetActorValue("WaitingForPlayer") == 1)
 		DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(ThisActor), 5)
 	endif
 endEvent
@@ -37,7 +39,7 @@ event OnUnload()
 	endif
 
 	;Per Vanilla - "if follower unloads while waiting for the player, wait three days then dismiss him"
-	if (ThisActor.GetAV("WaitingForPlayer") == 1)
+	if (ThisActor.GetActorValue("WaitingForPlayer") == 1)
 		DialogueFollower.FollowerMultiFollowWait(Self, DialogueFollower.IsFollower(ThisActor), 1)
 	endif
 endEvent
@@ -183,7 +185,7 @@ event OnUpdate()
 		endif
 	elseif (ThisActor.IsDoingFavor())
 		SetSpeedup(ThisActor, false)
-	elseif (ThisActor.GetAV("WaitingForPlayer") == 0)
+	elseif (ThisActor.GetActorValue("WaitingForPlayer") == 0)
 		float maxDist = 4096.0
 		if (!PlayerRef.HasLOS(ThisActor))
 			maxDist *= 0.5
@@ -206,24 +208,37 @@ event OnUpdate()
 endEvent
 
 function SetSpeedup(Actor ThisActor, bool punchIt)
-	float speedMult = ThisActor.GetAV("SpeedMult")
 	if (punchIt)
-		;This will compound over time until we actually catch up - 2x, 3x, 4x... 88x. lols
-		if (speedMult > 8800)
-			return
-		endif
-		ThisActor.ModAV("SpeedMult", 100)
-		ThisActor.ModAV("CarryWeight", 1) ;CarryWeight must be adjusted for SpeedMult to apply
-		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + speedMult)
-	else
-		float baseMult = ThisActor.GetBaseAV("SpeedMult")
-		if (speedMult <= baseMult)
-			return
+		;For managing SpeedMult, using spells is safer than ModActorValue as we can let Skyrim natively manage a "temp" modifier (vs ModActorValue's "perm" modifier)
+		;So, we just dynamically set the spell's magnitude before we apply it, and we're rolling
+		;(SetNthEffectMagnitude doesn't affect active spell instances, thus won't affect other followers - barring a race condition, and at that point we'll just allow it)
+		;Thus, we must remove the old spell if active - we can quickly infer this by FollowerSpeedAbilitySpeedMult
+		if (FollowerSpeedAbilitySpeedMult)
+			ThisActor.RemoveSpell(DialogueFollower.FollowerSpeedAbility)
 		endif
 
-		;Using ModAV and ForceAV doesn't change BaseAV, so we can safely look those up to reset to previous values - appears to work across saves
-		ThisActor.ForceAV("SpeedMult", baseMult)
-		ThisActor.ForceAV("CarryWeight", ThisActor.GetBaseAV("CarryWeight"))
+		;This will compound over time until we actually catch up - 2x, 3x, 4x... 88x. lols
+		if (FollowerSpeedAbilitySpeedMult < 8700.0)
+			FollowerSpeedAbilitySpeedMult += 100.0
+		endif
+
+		;SetNthEffectMagnitude may not persist in save, but we don't care
+		DialogueFollower.FollowerSpeedAbility.SetNthEffectMagnitude(0, FollowerSpeedAbilitySpeedMult)
+		ThisActor.AddSpell(DialogueFollower.FollowerSpeedAbility)
+		ApplySpeedMult(ThisActor)
+		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + FollowerSpeedAbilitySpeedMult)
+	elseif (FollowerSpeedAbilitySpeedMult)
+		FollowerSpeedAbilitySpeedMult = 0.0
+		ThisActor.RemoveSpell(DialogueFollower.FollowerSpeedAbility)
+		ApplySpeedMult(ThisActor)
 		;Debug.Trace("foxFollowActor - dropping to impulse power")
 	endif
+endFunction
+function ApplySpeedMult(Actor ThisActor)
+	;CarryWeight must be adjusted for SpeedMult to apply
+	;But! It turns out we must modify CarryWeight by script, not by spell :(
+	;Since we're just quickly modifying the base value back and forth, this should be safe!
+	float wt = ThisActor.GetBaseActorValue("CarryWeight")
+	ThisActor.SetActorValue("CarryWeight", wt + 1.0)
+	ThisActor.SetActorValue("CarryWeight", wt)
 endFunction
