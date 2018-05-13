@@ -192,8 +192,12 @@ event OnUpdate()
 		endif
 		float dist = ThisActor.GetDistance(PlayerRef)
 		if (dist > maxDist && !PlayerRef.IsOnMount())
+			;Ideally, we'd teleport to the nearest nav node behind player, but that's not exposed to papyrus as far as I can tell
+			;However, if we teleport into the ground, Skyrim will eventually place us somewhere valid
+			;Where's Unreal's LastAnchor property when you need it? :|
+			;Teleporting 32 units above player allows some leeway with slopes while preventing too many falling noises
 			float aZ = PlayerRef.GetAngleZ()
-			ThisActor.MoveTo(PlayerRef, -192.0 * Math.Sin(aZ), -192.0 * Math.Cos(aZ), 64.0, true)
+			ThisActor.MoveTo(PlayerRef, -192.0 * Math.Sin(aZ), -192.0 * Math.Cos(aZ), 32.0, true)
 			SetSpeedup(ThisActor, false)
 			;Debug.Trace("foxFollowActor - initiating hyperjump!")
 		else
