@@ -298,8 +298,7 @@ function SetPreferredFollowerAlias(Actor FollowerActor, int newCommandMode = 0)
 	endif
 
 	;Also handle CommandMode here - for now, CommandMode > 0 means command all followers
-	;Assign a negative value to indicate CommandMode is waiting to be consumed by a supported command
-	CommandMode = -newCommandMode
+	CommandMode = newCommandMode
 endFunction
 
 ;Check our preferred follower, setting to first available if empty (so we have something for commands to use - also nice to have vanilla aliases filled for any third party scripts)
@@ -466,8 +465,10 @@ endFunction
 function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, int mode)
 	;This gets tricky because we very well may have no idea who we're actually telling to follow / wait
 	;However, if we're commanding multiple followers, this is fine and we'll actually force a None FollowerAlias...
-	if (CommandMode < 0)
-		CommandMode *= -1 ;Negate CommandMode again to indicate we've consumed it, so it's not again handled by recursive calls
+	;Also, consume CommandMode immediately to avoid threading weirdness
+	int inCommandMode = CommandMode
+	CommandMode = 0
+	if (inCommandMode)
 		FollowerAlias = None
 	elseif (!FollowerAlias)
 		FollowerAlias = GetPreferredFollowerAlias(isFollower)
@@ -483,7 +484,6 @@ function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, 
 			endif
 			i += 1
 		endwhile
-		CommandMode = 0
 		return
 	endif
 
@@ -501,8 +501,10 @@ endFunction
 function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int iMessage = 0, int iSayLine = 1)
 	;This gets tricky because we very well may have no idea who we're actually dismissing
 	;However, if we're commanding multiple followers, this is fine and we'll actually force a None FollowerAlias...
-	if (CommandMode < 0)
-		CommandMode *= -1 ;Negate CommandMode again to indicate we've consumed it, so it's not again handled by recursive calls
+	;Also, consume CommandMode immediately to avoid threading weirdness
+	int inCommandMode = CommandMode
+	CommandMode = 0
+	if (inCommandMode)
 		FollowerAlias = None
 
 		;Just pass in iSayLine 0 because we don't really need to hear the whole party blab
@@ -525,12 +527,11 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 			if (!MultiActor)
 				;Just purge the slot anyways - iMessage -1 tells DismissMultiFollower to skip None Actor warning
 				DismissMultiFollower(Followers[i], true, -1, 0)
-			elseif (CommandMode || IsFollower(MultiActor) == isFollower)
+			elseif (inCommandMode || IsFollower(MultiActor) == isFollower)
 				DismissMultiFollower(Followers[i], isFollower, iMessage, iSayLine)
 			endif
 			i += 1
 		endwhile
-		CommandMode = 0
 		return
 	endif
 
