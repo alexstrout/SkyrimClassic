@@ -113,7 +113,7 @@ function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCond
 				DialogueFollower.FollowerForgetSpellMessage.Show()
 				DialogueFollower.FollowerForgetSpellSound.Play(PlayerRef)
 			endif
-			SetMinMagicka(ThisActor, BookSpell.GetMagickaCost())
+			SetMinMagicka(ThisActor, BookSpell.GetMagickaCost(), true)
 		endif
 	endif
 endFunction
@@ -159,7 +159,7 @@ function RemoveAllBookSpells()
 endFunction
 
 ;Many followers have classes that don't put any weight into Magicka - so make sure we have the minimum required to at least cast a spell
-function SetMinMagicka(Actor ThisActor, int cost = -1)
+function SetMinMagicka(Actor ThisActor, int cost = -1, bool enumSpellsOnEqualCost = false)
 	;If we already have the minimum required magicka to cast this spell, no changes are needed
 	;Debug.Trace("foxFollowActor - magicka stuff starting...")
 	if (cost >= 0 && cost < FollowerAdjMagickaCost)
@@ -168,7 +168,7 @@ function SetMinMagicka(Actor ThisActor, int cost = -1)
 	endif
 
 	;Find our highest-cost spell if we didn't pass in cost, or if we had the highest cost (could be a different spell, but who cares)
-	if (cost == -1 || cost == FollowerAdjMagickaCost)
+	if (cost == -1 || (enumSpellsOnEqualCost && cost == FollowerAdjMagickaCost))
 		FollowerAdjMagickaCost = 0
 		cost = 0
 		int i = LearnedSpellBookList.GetSize()
@@ -189,6 +189,9 @@ function SetMinMagicka(Actor ThisActor, int cost = -1)
 
 	;Calculate our required magicka, and add that if necessary - also clear our old buff if no longer needed
 	int reqMagicka = cost + 10 - ThisActor.GetBaseActorValue("Magicka") as int
+	if (reqMagicka == FollowerAdjMagicka)
+		return
+	endif
 	if (FollowerAdjMagicka)
 		ThisActor.ModActorValue("Magicka", -FollowerAdjMagicka)
 		;Debug.Trace("foxFollowActor - magicka stuff debuffing by old required minimum calc " + FollowerAdjMagicka)
@@ -227,7 +230,7 @@ event OnActivate(ObjectReference akActivator)
 		;Set ourself as the preferred follower until we've quit gabbing
 		;CommandMode will also stay valid during this time, until either consumed by a command or cleared by ClearPreferredFollowerAlias
 		Actor ThisActor = Self.GetActorRef()
-		SetMinMagicka(ThisActor)
+		SetMinMagicka(ThisActor, FollowerAdjMagickaCost)
 		DialogueFollower.SetPreferredFollowerAlias(ThisActor, commandMode)
 		while (DialogueFollower.MeetsPreferredFollowerAliasConditions(ThisActor))
 			Utility.Wait(DialogWaitTime)
