@@ -12,7 +12,9 @@ foxFollowDialogueFollowerScript Property DialogueFollower Auto
 Actor Property PlayerRef Auto
 FormList Property LearnedSpellBookList Auto
 
-float FollowerSpeedAbilitySpeedMult
+int FollowerAdjSpeedMult
+int FollowerAdjMagicka
+int FollowerAdjMagickaCost
 
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
 float Property FollowUpdateTime = 4.5 AutoReadOnly
@@ -83,6 +85,7 @@ function AddBookSpell(Book SomeBook, bool ShowMessage = true)
 				DialogueFollower.FollowerLearnSpellMessage.Show()
 				DialogueFollower.FollowerLearnSpellSound.Play(PlayerRef)
 			endif
+			SetMinMagicka(ThisActor, BookSpell.GetMagickaCost())
 		;else
 		;	Debug.MessageBox("Follower already knows " + BookSpell.GetName() + "!")
 		endif
@@ -110,8 +113,17 @@ function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCond
 				DialogueFollower.FollowerForgetSpellMessage.Show()
 				DialogueFollower.FollowerForgetSpellSound.Play(PlayerRef)
 			endif
+			SetMinMagicka(ThisActor, BookSpell.GetMagickaCost())
 		endif
 	endif
+endFunction
+
+Spell function GetBookSpell(int i)
+	Book SomeBook = LearnedSpellBookList.GetAt(i) as Book
+	if (SomeBook)
+		return SomeBook.GetSpell()
+	endif
+	return None
 endFunction
 
 function AddAllBookSpells()
@@ -146,6 +158,57 @@ function RemoveAllBookSpells()
 	LearnedSpellBookList.Revert()
 endFunction
 
+;Many followers have classes that don't put any weight into Magicka - so make sure we have the minimum required to at least cast a spell
+function SetMinMagicka(Actor ThisActor, int cost = -1)
+	;If we already have the minimum required magicka to cast this spell, no changes are needed
+	;Debug.Trace("foxFollowActor - magicka stuff starting...")
+	if (cost >= 0 && cost < FollowerAdjMagickaCost)
+		;Debug.Trace("foxFollowActor - magicka stuff skipping, too low - cost " + cost)
+		return
+	endif
+
+	;Find our highest-cost spell if we didn't pass in cost, or if we had the highest cost (could be a different spell, but who cares)
+	if (cost == -1 || cost == FollowerAdjMagickaCost)
+		FollowerAdjMagickaCost = 0
+		cost = 0
+		int i = LearnedSpellBookList.GetSize()
+		Spell BookSpell = None
+		while (i)
+			i -= 1
+			BookSpell = GetBookSpell(i)
+			if (BookSpell)
+				cost = BookSpell.GetMagickaCost()
+				;Debug.Trace("foxFollowActor - magicka stuff found BookSpell cost " + cost + "\t" + BookSpell + BookSpell.GetName())
+				if (cost > FollowerAdjMagickaCost)
+					FollowerAdjMagickaCost = cost
+				endif
+			endif
+		endwhile
+		cost = FollowerAdjMagickaCost
+	endif
+
+	;Calculate our required magicka, and add that if necessary - also clear our old buff if no longer needed
+	int reqMagicka = cost + 10 - ThisActor.GetBaseActorValue("Magicka") as int
+	if (FollowerAdjMagicka)
+		ThisActor.ModActorValue("Magicka", -FollowerAdjMagicka)
+		;Debug.Trace("foxFollowActor - magicka stuff debuffing by old required minimum calc " + FollowerAdjMagicka)
+		if (reqMagicka <= 0)
+			FollowerAdjMagicka = 0
+			FollowerAdjMagickaCost = 0
+			;Debug.Trace("foxFollowActor - magicka stuff clearing and skipping, calc too low - cost " + cost + "\treqMagicka " + reqMagicka)
+			return
+		endif
+	elseif (reqMagicka <= 0)
+		;Debug.Trace("foxFollowActor - magicka stuff skipping, calc too low - cost " + cost + "\treqMagicka " + reqMagicka)
+		return
+	endif
+
+	FollowerAdjMagicka = reqMagicka
+	FollowerAdjMagickaCost = cost
+	ThisActor.ModActorValue("Magicka", FollowerAdjMagicka)
+	;Debug.Trace("foxFollowActor - magicka stuff buffing by required minimum calc " + FollowerAdjMagicka)
+endFunction
+
 ;Track last follower activated so we have something to fall back on later
 event OnActivate(ObjectReference akActivator)
 	;Debug.Trace("foxFollowActor - activated! :|")
@@ -153,12 +216,18 @@ event OnActivate(ObjectReference akActivator)
 		;Debug.Trace("foxFollowActor - activated by Player! :D")
 		DialogueFollower.CheckForModUpdate()
 		DialogueFollower.UpdateFollowerCount()
+
+		;Set CommandMode based on hotkey being held down
 		int commandMode = 0
 		if (Input.IsKeyPressed(Input.GetMappedKey("Sprint")))
 			commandMode = 1
 			DialogueFollower.FollowerCommandModeMessage.Show()
 		endif
+
+		;Set ourself as the preferred follower until we've quit gabbing
+		;CommandMode will also stay valid during this time, until either consumed by a command or cleared by ClearPreferredFollowerAlias
 		Actor ThisActor = Self.GetActorRef()
+		SetMinMagicka(ThisActor)
 		DialogueFollower.SetPreferredFollowerAlias(ThisActor, commandMode)
 		while (DialogueFollower.MeetsPreferredFollowerAliasConditions(ThisActor))
 			Utility.Wait(DialogWaitTime)
@@ -213,35 +282,24 @@ endEvent
 
 function SetSpeedup(Actor ThisActor, bool punchIt)
 	if (punchIt)
-		;For managing SpeedMult, using spells is safer than ModActorValue as we can let Skyrim natively manage a "temp" modifier (vs ModActorValue's "perm" modifier)
-		;So, we just dynamically set the spell's magnitude before we apply it, and we're rolling
-		;(SetNthEffectMagnitude doesn't affect active spell instances, thus won't affect other followers - barring a race condition, and at that point we'll just allow it)
-		;Thus, we must remove the old spell if active - we can quickly infer this by FollowerSpeedAbilitySpeedMult
-		if (FollowerSpeedAbilitySpeedMult)
-			ThisActor.RemoveSpell(DialogueFollower.FollowerSpeedAbility)
-		endif
-
 		;This will compound over time until we actually catch up - 2x, 3x, 4x... 88x. lols
-		if (FollowerSpeedAbilitySpeedMult < 8700.0)
-			FollowerSpeedAbilitySpeedMult += 100.0
+		if (FollowerAdjSpeedMult > 8700)
+			return
 		endif
 
-		;SetNthEffectMagnitude may not persist in save, but we don't care
-		DialogueFollower.FollowerSpeedAbility.SetNthEffectMagnitude(0, FollowerSpeedAbilitySpeedMult)
-		ThisActor.AddSpell(DialogueFollower.FollowerSpeedAbility)
+		FollowerAdjSpeedMult += 100
+		ThisActor.ModActorValue("SpeedMult", 100.0)
 		ApplySpeedMult(ThisActor)
-		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + FollowerSpeedAbilitySpeedMult)
-	elseif (FollowerSpeedAbilitySpeedMult)
-		FollowerSpeedAbilitySpeedMult = 0.0
-		ThisActor.RemoveSpell(DialogueFollower.FollowerSpeedAbility)
+		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + FollowerAdjSpeedMult)
+	elseif (FollowerAdjSpeedMult)
+		ThisActor.ModActorValue("SpeedMult", -FollowerAdjSpeedMult)
+		FollowerAdjSpeedMult = 0
 		ApplySpeedMult(ThisActor)
 		;Debug.Trace("foxFollowActor - dropping to impulse power")
 	endif
 endFunction
 function ApplySpeedMult(Actor ThisActor)
 	;CarryWeight must be adjusted for SpeedMult to apply
-	;But! It turns out we must modify CarryWeight by script, not by spell :(
-	;Since we're just quickly modifying the base value back and forth, this should be safe!
 	float wt = ThisActor.GetBaseActorValue("CarryWeight")
 	ThisActor.SetActorValue("CarryWeight", wt + 1.0)
 	ThisActor.SetActorValue("CarryWeight", wt)

@@ -46,8 +46,6 @@ Message Property FollowerLearnSpellMessage Auto
 Message Property FollowerForgetSpellMessage Auto
 Message Property FollowerCommandModeMessage Auto
 
-Spell Property FollowerSpeedAbility Auto
-
 int Property foxFollowVer Auto
 int Property foxFollowScriptVer = 1 AutoReadOnly
 
