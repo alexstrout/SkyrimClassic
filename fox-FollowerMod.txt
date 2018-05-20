@@ -1,7 +1,3 @@
-TODO:
--- Make sure SetSpeedup doesn't blow away valid modifiers for SpeedMult and CarryWeight (more worried about CarryWeight)
-	-- This should probably be a native MAGEffect instead
-
 Multi-Follower Spell Tome Learning
 ------
 Implements simple multi-follower support, with spell tome learning and catch-up / teleporting.
@@ -21,9 +17,8 @@ To command all followers at once, hold your "Sprint" key while beginning dialogu
 
 [h1]Additional Information[/h1]
 Fully supports animal followers too! (provided they use the vanilla DialogueFollower system)
-If you attempt to recruit more than 10 followers, you will get a
 
-Catch-up / teleporting is automatic, based on distance and line-of-sight.
+Catch-up / teleporting is automatic, based on distance and line of sight.
 When lagging behind, they will continually increase their SpeedMult until they catch up.
 If too far, they will instead automatically teleport behind you, unless you're riding a mount.
 
@@ -37,15 +32,23 @@ Dismiss all followers in your party (very important!), then remove the plugin as
 Optionally, use ReSaver (or similar) to remove any leftover references in your save:
 https://www.nexusmods.com/skyrim/mods/76776
 
-Warning: If you don't dismiss all followers before removing the plugin, they will permanently remember any spells learned from spell tomes, and may be permanently stuck in a follow state. Please avoid doing this!
+[b]Warning:[/b] If you don't dismiss all followers before removing the plugin, they will permanently remember any spells learned from spell tomes, and may be permanently stuck in a follow state. Please avoid doing this!
 
 [h1]Known Issues[/h1]
-None currently! :)
+It's possible to confuse the plugin by giving one follower an order and, before they've finished saying their line, immediately exiting dialogue and talking to another follower. This is because the vanilla DialogueFollower system:
+[list][*]Only differentiates between a single normal/animal follower
+[*]Only executes commands after a follower has finished saying their line[/list]
+The plugin tracks who you're giving orders to by whom you last initiated dialogue with. Thus, if you tell Alice to "wait here" and immediately talk to Bob, the command will apply to Bob once Alice has finished talking.
+(this does not apply if Alice is a dude and Bob is a dog - the vanilla system can always distinguish between those two cases, and thus so can this plugin)
 
-[h1]Acknowledgements[/h1]
+A similar situation occurs when holding "Shift" to command all followers - if you give a command and then immediately initiate dialogue again, the "Shift" state will be changed before the command is executed.
+
+However, worst-case scenario, nothing breaks. You just might get Bob executing an order instead of Alice if you're going too fast. :)
+
+[h1]Acknowledgments[/h1]
 NorthStar's Followers Keep Up:
 http://steamcommunity.com/sharedfiles/filedetails/?id=10172
-The catch-up / teleport This plugin's functionality heavily influenced my catch-up / teleporting solution,
+Catch-up / teleport functionality was heavily influenced by this plugin. Good stuff!
 
 TheTalkieToaster's Companion Share & Recruit:
 https://steamcommunity.com/sharedfiles/filedetails/?id=119922465
