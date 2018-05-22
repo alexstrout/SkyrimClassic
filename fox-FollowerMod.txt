@@ -13,7 +13,7 @@ Vanilla followers from an existing save will be "imported" automatically.
 While in your party, followers can automatically use spells from any spell tome in their inventory.
 To teach or un-teach spells, simply trade spell tomes with your follower.
 
-To command all followers at once, hold your "Sprint" key while beginning dialogue with a follower.
+To command all followers at once, hold your "Sprint" key while initiating dialogue with a follower.
 
 [h1]Additional Information[/h1]
 Fully supports animal followers too! (provided they use the vanilla DialogueFollower system)
@@ -36,14 +36,14 @@ https://www.nexusmods.com/skyrim/mods/76776
 
 [h1]Known Issues[/h1]
 It's possible to confuse the plugin by giving one follower an order and, before they've finished saying their line, immediately exiting dialogue and talking to another follower. This is because the vanilla DialogueFollower system:
-[list][*]Only differentiates between a single normal/animal follower
-[*]Only executes commands after a follower has finished saying their line[/list]
+[olist][*]Only differentiates between a single normal/animal follower
+[*]Only executes commands after a follower has finished saying their line[/olist]
 The plugin tracks who you're giving orders to by whom you last initiated dialogue with. Thus, if you tell Alice to "wait here" and immediately talk to Bob, the command will apply to Bob once Alice has finished talking.
-(this does not apply if Alice is a dude and Bob is a dog - the vanilla system can always distinguish between those two cases, and thus so can this plugin)
+(Note: Non-issue if Alice is a dude and Bob is a dog - we can always tell them apart, per above)
 
-A similar situation occurs when holding "Shift" to command all followers - if you give a command and then immediately initiate dialogue again, the "Shift" state will be changed before the command is executed.
+A similar situation occurs when holding "Sprint" to command all followers - if you give a command and then immediately initiate dialogue again, the "Sprint" state can change before the command is executed.
 
-However, worst-case scenario, nothing breaks. You just might get Bob executing an order instead of Alice if you're going too fast. :)
+Worst-case scenario though, nothing breaks! :)
 
 [h1]Acknowledgments[/h1]
 NorthStar's Followers Keep Up:

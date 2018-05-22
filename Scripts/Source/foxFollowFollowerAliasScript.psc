@@ -18,7 +18,6 @@ int FollowerAdjMagickaCost
 
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
 float Property FollowUpdateTime = 4.5 AutoReadOnly
-float Property DialogWaitTime = 6.0 AutoReadOnly
 
 event OnUpdateGameTime()
 	Actor ThisActor = Self.GetActorRef()
@@ -118,7 +117,7 @@ function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCond
 	endif
 endFunction
 
-Spell function GetBookSpell(int i)
+Spell function GetNthBookSpell(int i)
 	Book SomeBook = LearnedSpellBookList.GetAt(i) as Book
 	if (SomeBook)
 		return SomeBook.GetSpell()
@@ -175,7 +174,7 @@ function SetMinMagicka(Actor ThisActor, int cost = -1, bool enumSpellsOnEqualCos
 		Spell BookSpell = None
 		while (i)
 			i -= 1
-			BookSpell = GetBookSpell(i)
+			BookSpell = GetNthBookSpell(i)
 			if (BookSpell)
 				cost = BookSpell.GetMagickaCost()
 				;Debug.Trace("foxFollowActor - magicka stuff found BookSpell cost " + cost + "\t" + BookSpell + BookSpell.GetName())
@@ -222,21 +221,17 @@ event OnActivate(ObjectReference akActivator)
 
 		;Set CommandMode based on hotkey being held down
 		int commandMode = 0
-		if (Input.IsKeyPressed(Input.GetMappedKey("Sprint")))
+		if (DialogueFollower.RequestingCommandMode())
 			commandMode = 1
 			DialogueFollower.FollowerCommandModeMessage.Show()
 		endif
+		DialogueFollower.SetCommandMode(commandMode)
 
 		;Set ourself as the preferred follower until we've quit gabbing
-		;CommandMode will also stay valid during this time, until either consumed by a command or cleared by ClearPreferredFollowerAlias
+		;CommandMode will also stay valid during this time, until either consumed by a command or cleared by ClearCommandMode
 		Actor ThisActor = Self.GetActorRef()
 		SetMinMagicka(ThisActor, FollowerAdjMagickaCost)
-		DialogueFollower.SetPreferredFollowerAlias(ThisActor, commandMode)
-		while (DialogueFollower.MeetsPreferredFollowerAliasConditions(ThisActor))
-			Utility.Wait(DialogWaitTime)
-		endwhile
-		Utility.Wait(DialogWaitTime)
-		DialogueFollower.ClearPreferredFollowerAlias(ThisActor)
+		DialogueFollower.SetPreferredFollowerAlias(ThisActor)
 		;Debug.Trace("foxFollowActor - finished being activated by Player :(")
 	endif
 endEvent
