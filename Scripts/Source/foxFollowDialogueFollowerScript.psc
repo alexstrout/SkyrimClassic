@@ -145,6 +145,10 @@ function CheckForModUpdate()
 	RegisterForControl("Sprint")
 endFunction
 event OnUpdate()
+	if (!Game.IsActivateControlsEnabled() || !Game.IsMovementControlsEnabled())
+		RegisterForSingleUpdate(InitialUpdateTime)
+		return
+	endif
 	CheckForModUpdate()
 endEvent
 function ModUpdate1()
