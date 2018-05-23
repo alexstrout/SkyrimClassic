@@ -60,21 +60,18 @@ bool ClearCommandModeNextUpdate
 
 ;Useful debug hotkeys
 ; event DebugControlDown(string control)
-; 	if (control == "Activate")
-; 		RegisterForControl("Sprint")
+; 	UnregisterForAllControls()
+; 	if (control == "Sprint")
+; 		RegisterForControl("Activate")
+; 	elseif (control == "Activate")
+; 		RegisterForControl("Ready Weapon")
 ; 		RegisterForControl("Jump")
 ; 		RegisterForControl("Sneak")
-; 	elseif (control == "Sprint")
-; 		UnregisterForAllControls()
-; 		RegisterForControl("Activate")
+; 	elseif (control == "Ready Weapon")
 ; 		DialogueFollower.DismissFollower()
 ; 	elseif (control == "Jump")
-; 		UnregisterForAllControls()
-; 		RegisterForControl("Activate")
 ; 		DialogueFollower.DismissAnimal()
 ; 	elseif (control == "Sneak")
-; 		UnregisterForAllControls()
-; 		RegisterForControl("Activate")
 ; 		string stuff = ""
 ; 		int i = 0
 ; 		while (i < Followers.Length)
@@ -112,12 +109,11 @@ bool ClearCommandModeNextUpdate
 ; 		endif
 ; 		Debug.Messagebox(stuff)
 ; 	endif
+; 	RegisterForControl("Sprint")
 ; endEvent
 ; event DebugControlUp(string control, float HoldTime)
-; 	if (control == "Activate")
-; 		UnregisterForAllControls()
-; 		RegisterForControl("Activate")
-; 	endif
+; 	UnregisterForAllControls()
+; 	RegisterForControl("Sprint")
 ; endEvent
 
 ;Init our stuff - hey since we're a separate script now this will actually always run on first load, hooray!
@@ -152,7 +148,7 @@ event OnUpdate()
 	CheckForModUpdate()
 endEvent
 function ModUpdate1()
-	;Telling our modified DialogueFollower to point to us, if it's somehow None (existing saves should pull the CK value, but PlayerRef somehow ended up None in foxPet)
+	;Tell our modified DialogueFollower to point to us, if it's somehow None (existing saves should pull the CK value, but PlayerRef somehow ended up None in foxPet)
 	if (!DialogueFollower.foxFollowDialogueFollower)
 		DialogueFollower.foxFollowDialogueFollower = Self
 	endif
@@ -172,6 +168,24 @@ function ModUpdate1()
 	CommandMode = 0
 	RequestCommandMode = false
 	ClearCommandModeNextUpdate = false
+
+	;Patch our DialogueFollower FollowerHuntingBow / FollowerIronArrow if they somehow ended up none
+	if (!DialogueFollower.FollowerHuntingBow)
+		;Debug.Trace("foxFollow FollowerHuntingBow is None - patching...")
+		Weapon DumbBow = Game.GetForm(0x0010E2DD) as Weapon
+		if (DumbBow && DumbBow.GetName() == "Hunting Bow")
+			;Debug.Trace("foxFollow FollowerHuntingBow patched to " + DumbBow)
+			DialogueFollower.FollowerHuntingBow = DumbBow
+		endif
+	endif
+	if (!DialogueFollower.FollowerIronArrow)
+		;Debug.Trace("foxFollow FollowerIronArrow is None - patching...")
+		Ammo DumbArrow = Game.GetForm(0x0010E2DE) as Ammo
+		if (DumbArrow && DumbArrow.GetName() == "Iron Arrow")
+			;Debug.Trace("foxFollow FollowerIronArrow patched to " + DumbArrow)
+			DialogueFollower.FollowerIronArrow = DumbArrow
+		endif
+	endif
 
 	;Grab our existing follower/animal followers from vanilla save
 	;Just use SetMultiFollower with a ForcedDestAlias to accomplish this - will safely ignore CheckForModUpdate
@@ -318,8 +332,14 @@ endFunction
 
 ;Check our preferred follower, setting to first available if empty (so we have something for commands to use - also nice to have vanilla aliases filled for any third party scripts)
 function CheckPreferredFollowerAlias(bool isFollower)
+	;Note: GetPreferredFollowerAlias gets the alias in the follower array (if it exists), not the actual DialogueFollower alias (since we always know that anyway)
+	;GetPreferredFollowerActorRef can still test if the DialogueFollower alias itself is filled, though
 	if (GetPreferredFollowerAlias(isFollower))
 		;Debug.Trace("foxFollow CheckPreferredFollowerAlias found valid alias - IsFollower: " + isFollower)
+		return
+	endif
+	if (!GetPreferredFollowerActorRef(isFollower))
+		;Debug.Trace("foxFollow CheckPreferredFollowerAlias already cleared! - IsFollower: " + isFollower)
 		return
 	endif
 
@@ -401,19 +421,32 @@ function SetCommandMode(int newCommandMode)
 	ClearCommandModeNextUpdate = false
 
 	;Periodically check if we should ClearCommandMode
-	RegisterForSingleUpdateGameTime(DialogWaitGameTime)
+	if (newCommandMode)
+		;Debug.Trace("foxFollow SetCommandMode queueing SingleUpdateGameTime...")
+		RegisterForSingleUpdateGameTime(DialogWaitGameTime)
+	else
+		;Debug.Trace("foxFollow SetCommandMode clearing UpdateGameTime!")
+		UnRegisterForUpdateGameTime()
+	endif
 endFunction
 
 ;Clear CommandMode, as long as no followers are currently being commanded - returns true if cleared
 bool function ClearCommandMode()
-	;Debug.Trace("foxFollow ClearCommandMode testing...")
+	if (!CommandMode)
+		;Debug.Trace("foxFollow ClearCommandMode already cleared!")
+		ClearCommandModeNextUpdate = false
+		return true
+	endif
+
 	Actor FollowerActor = GetPreferredFollowerActorRef(true)
 	if (FollowerActor && MeetsPreferredFollowerAliasConditions(FollowerActor))
+		;Debug.Trace("foxFollow ClearCommandMode waiting for Follower...")
 		ClearCommandModeNextUpdate = false
 		return false
 	endif
 	FollowerActor = GetPreferredFollowerActorRef(false)
 	if (FollowerActor && MeetsPreferredFollowerAliasConditions(FollowerActor))
+		;Debug.Trace("foxFollow ClearCommandMode waiting for Animal...")
 		ClearCommandModeNextUpdate = false
 		return false
 	endif
@@ -469,6 +502,13 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower, Referenc
 			Debug.MessageBox("Couldn't set ForcedDestAlias! Oops\nUsing first available instead...\nIsFollower: " + isFollower)
 		endif
 		FollowerAlias = AddFollowerAlias(FollowerActor)
+
+		;Attempt to dismiss a single member of our follow type if we're full, to fix foxPet bugz :)
+		;Note: DismissMultiFollower will automatically try the opposite type if we have no followers of our type
+		if (!FollowerAlias)
+			DismissMultiFollower(None, isFollower)
+			FollowerAlias = AddFollowerAlias(FollowerActor)
+		endif
 	endif
 	if (!FollowerAlias)
 		Debug.MessageBox("Added too many followers! Oops\nNo available slots. Skipping...\nIsFollower: " + isFollower)
@@ -499,6 +539,11 @@ function SetMultiFollower(ObjectReference FollowerRef, bool isFollower, Referenc
 	if (isFollower)
 		FollowerActor.AddToFaction(FollowerInfoFaction)
 	endif
+
+	;TODO Tell our alias script whether we're a follower or not so we don't have to keep calling IsFollower
+	;Could likely replace FollowerInfoFaction with this? Might be cleaner and would require no Actor loaded
+	;(FollowerAlias as foxFollowFollowerAliasScript).IsFollower = isFollower
+
 	SetPreferredFollowerAlias(FollowerActor)
 endFunction
 
@@ -558,6 +603,13 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	elseif (!FollowerAlias)
 		;Debug.Trace("foxFollow attempting to dismiss None... - IsFollower: " + isFollower)
 		FollowerAlias = GetPreferredFollowerAlias(isFollower)
+
+		;Attempt to dismiss a single member of the opposite follow type if we're full, to fix foxPet bugz :)
+		;This also makes sense because if PlayerAnimalCount is 1 we would expect DismissAnimal to make room for a new Animal follower
+		;Switching up follower type is safe because we check for it down below - but we don't want to flip isFollower yet!
+		if (!FollowerAlias && GetNumFollowers() >= Followers.Length)
+			FollowerAlias = GetPreferredFollowerAlias(!isFollower)
+		endif
 	endif
 
 	;If we can't figure out a specific follower, just dismiss everyone of our follow type - either we're in CommandMode, or we've been called from a quest or something
@@ -594,15 +646,13 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	(FollowerAlias as foxFollowFollowerAliasScript).SetSpeedup(FollowerActor, false)
 
 	;Make sure we're actually a follower (might have gotten mixed up somehow - could happen if we try to trick the script by quickly talking to the wrong type)
+	;Actually, we won't get confused by talking to the wrong type - preferred follower is always filled now!
+	;But this can switch if we're full and need to dismiss an opposite-type follower to make room, see above in !FollowerAlias checks
 	if (IsFollower(FollowerActor) != isFollower)
-		;Debug.Trace("Follower type didn't match! - IsFollower: " + isFollower)
+		;Debug.Trace("foxFollow DismissMultiFollower follower type didn't match! - IsFollower: " + isFollower)
 		isFollower = IsFollower(FollowerActor)
 	endif
 	FollowerActor.RemoveFromFaction(FollowerInfoFaction)
-
-	;TODO Tell our alias script whether we're a follower or not so we don't have to keep calling IsFollower
-	;Could likely replace FollowerInfoFaction with this? Might be cleaner and would require no Actor loaded
-	;(FollowerAlias as foxFollowFollowerAliasScript).IsFollower = isFollower
 
 	;These things from DialogueFollowerScript.DismissFollower we would like to run on both followers and animals
 	FollowerActor.StopCombatAlarm()
@@ -610,15 +660,17 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	FollowerActor.SetActorValue("WaitingForPlayer", 0)
 
 	;Per Vanilla - "PATCH 1.9: 77615: remove unplayable hunting bow when follower is dismissed"
-	;Added in additional safety checks - may not be set on old scripts
+	;Added in additional safety checks - may not be set on old scripts, but we now patch it in ModUpdate
 	if (DialogueFollower.FollowerHuntingBow && DialogueFollower.FollowerIronArrow)
 		int itemCount = FollowerActor.GetItemCount(DialogueFollower.FollowerHuntingBow)
 		if (itemCount > 0)
 			FollowerActor.RemoveItem(DialogueFollower.FollowerHuntingBow, itemCount, true)
+			;Debug.Trace("foxFollow tossed dumb FollowerHuntingBow: " + itemCount)
 		endif
 		itemCount = FollowerActor.GetItemCount(DialogueFollower.FollowerIronArrow)
 		if (itemCount > 0)
 			FollowerActor.RemoveItem(DialogueFollower.FollowerIronArrow, itemCount, true)
+			;Debug.Trace("foxFollow tossed dumb FollowerIronArrow: " + itemCount)
 		endif
 	endif
 
