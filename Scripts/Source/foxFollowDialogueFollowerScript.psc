@@ -422,6 +422,7 @@ endFunction
 ;Set CommandMode - for now, CommandMode > 0 means command all followers
 function SetCommandMode(int newCommandMode)
 	CommandMode = newCommandMode
+	RequestCommandMode = false ;Looks like OnControlUp isn't always processed in dialogue - unset here just in case
 	ClearCommandModeNextUpdate = false
 
 	;Periodically check if we should ClearCommandMode
