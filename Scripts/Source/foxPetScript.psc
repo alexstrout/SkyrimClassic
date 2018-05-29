@@ -33,14 +33,14 @@ endFunction
 function foxPetRemovePet(Actor ThatActor = None)
 	if (!ThatActor)
 		ThatActor = DialogueFollower.pAnimalAlias.GetActorRef()
-		if (!ThatActor)
-			return
-		endif
 	endif
 	if (ThatActor != Self as ObjectReference)
 		foxPetScriptHasAnimalMessage.Show()
 	endif
 	DialogueFollower.DismissAnimal()
+	if (!ThatActor)
+		return
+	endif
 	ThatActor.SetPlayerTeammate(false)
 	ThatActor.SetActorValue("WaitingForPlayer", 0)
 endFunction
@@ -68,7 +68,7 @@ endEvent
 event OnActivate(ObjectReference akActivator)
 	Actor ThisActor = (Self as ObjectReference) as Actor
 
-	;Also fix 0 lockpicking on old saves caused by vanilla SetAnimal (doesn't really matter, but should be done anyway)
+	;Fix 0 lockpicking on old saves caused by vanilla SetAnimal (doesn't really matter, but should be done anyway)
 	;Also for some reason PlayerRef is None on old saves...?
 	;This should also fix very old pets that are still set as a teammate even though they were dismissed
 	if (!PlayerRef || ThisActor.GetBaseActorValue("Lockpicking") == 0)
