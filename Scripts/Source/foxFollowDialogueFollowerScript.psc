@@ -46,6 +46,10 @@ Message Property FollowerLearnSpellMessage Auto
 Message Property FollowerForgetSpellMessage Auto
 Message Property FollowerCommandModeMessage Auto
 
+GlobalVariable Property GlobalTeleport Auto
+GlobalVariable Property GlobalMaxDist Auto
+GlobalVariable Property GlobalAdjMagicka Auto
+
 int Property foxFollowVer Auto
 int Property foxFollowScriptVer = 1 AutoReadOnly
 
@@ -139,6 +143,13 @@ function CheckForModUpdate()
 			Debug.MessageBox("foxFollow ready to roll!\nPrevious Version: " + ver + "\nNew Version: " + foxFollowScriptVer + "\n\nIf uninstalling mod later, please remember\nto dismiss all followers first. Thanks!")
 		endif
 	endif
+
+	;Update all followers' cached globals every check
+	int i = Followers.Length
+	while (i)
+		i -= 1
+		(Followers[i] as foxFollowFollowerAliasScript).UpdateGlobalValueCache()
+	endwhile
 
 	;Input.IsKeyPressed seems to have a hard time with gamepads - so just listen for Sprint here
 	;Note: Placed here to run every check in case we somehow unregister our key on accident (e.g. Steam cloud not carrying SKSE co-save)

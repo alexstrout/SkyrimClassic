@@ -21,8 +21,22 @@ Fully supports animal followers too! (provided they use the vanilla DialogueFoll
 Catch-up / teleporting is automatic, based on distance and line of sight.
 When lagging behind, they will continually increase their SpeedMult until they catch up.
 If too far, they will instead automatically teleport behind you, unless you're riding a mount.
+(This includes if you are thrown in jail, etc. - there are currently no location checks)
 
 Spell tome learning avoids manipulating any spells a follower already knows from vanilla.
+However, many followers have 0 magicka growth, and are stuck at 50 magicka regardless of level.
+Thus, if needed, followers' minimum magicka is adjusted to meet their most expensive learned spell.
+
+[h1]Configuration[/h1]
+foxFollow comes with a few config variables:
+[list][*][b]1foxFollowTeleport[/b] - enable teleporting? [i]0/1 (default 1)[/i]
+[*][b]1foxFollowMaxDist[/b] - teleport distance, speedup distance is 0.5x this [i](default 4096.0)[/i]
+[*][b]1foxFollowAdjMagicka[/b] - adjust magicka for learned spells? [i]0/1 (default 1)[/i][/olist]
+Type "set [b]someVar[/b] to [i]someVal[/i]" in console (~ key) to adjust config variables.
+e.g. "set 1foxFollowAdjMagicka to 0" to disable follower magicka adjustment for learned spells.
+
+For performance reasons, changes only take effect after talking to any follower.
+Setting 1foxFollowMaxDist to -1 will completely disable catch-up / teleport functionality.
 
 [h1]Compatibility[/h1]
 Should be compatible with anything that doesn't modify DialogueFollower or DialogueFollowerScript.

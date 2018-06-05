@@ -16,8 +16,20 @@ int FollowerAdjSpeedMult
 int FollowerAdjMagicka
 int FollowerAdjMagickaCost
 
+bool GlobTeleport
+float GlobMaxDist
+bool GlobAdjMagicka
+
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
 float Property FollowUpdateTime = 4.5 AutoReadOnly
+
+;Update our cached global values so we don't have to call GetValue every update
+;Currently checked on DialogueFollower's CheckForModUpdate (and anywhere that's checked - e.g. our OnActivate)
+function UpdateGlobalValueCache()
+	GlobTeleport = DialogueFollower.GlobalTeleport.GetValue() as bool
+	GlobMaxDist = DialogueFollower.GlobalMaxDist.GetValue()
+	GlobAdjMagicka = DialogueFollower.GlobalAdjMagicka.GetValue() as bool
+endFunction
 
 event OnUpdateGameTime()
 	Actor ThisActor = Self.GetActorRef()
@@ -152,13 +164,20 @@ function RemoveAllBookSpells()
 			RemoveBookSpell(SomeBook, false)
 		endif
 	endwhile
-
+	
 	;Fully revert just in case we missed any (we shouldn't! Unless our reference ended up None somehow. Oops!)
 	LearnedSpellBookList.Revert()
 endFunction
 
 ;Many followers have classes that don't put any weight into Magicka - so make sure we have the minimum required to at least cast a spell
 function SetMinMagicka(Actor ThisActor, int cost = -1, bool enumSpellsOnEqualCost = false)
+	;Factor in GlobAdjMagicka - if not desired, treat every spell as zero-cost
+	;This way, existing code will either never set FollowerAdjMagicka, or clear it if previously set
+	if (!GlobAdjMagicka)
+		cost = -10
+		enumSpellsOnEqualCost = false
+	endif
+
 	;If we already have the minimum required magicka to cast this spell, no changes are needed
 	;Debug.Trace("foxFollowActor - magicka stuff starting...")
 	if (cost >= 0 && cost < FollowerAdjMagickaCost)
@@ -250,15 +269,15 @@ event OnUpdate()
 		if (!PlayerRef.IsInCombat())
 			ThisActor.StopCombat()
 		endif
-	elseif (ThisActor.IsDoingFavor())
-		SetSpeedup(ThisActor, false)
-	elseif (ThisActor.GetActorValue("WaitingForPlayer") == 0)
-		float maxDist = 4096.0
+	elseif (GlobMaxDist > 0.0 \
+	&& ThisActor.GetActorValue("WaitingForPlayer") == 0 \
+	&& !ThisActor.IsDoingFavor())
+		float maxDist = GlobMaxDist ;4096.0
 		if (!PlayerRef.HasLOS(ThisActor))
 			maxDist *= 0.5
 		endif
 		float dist = ThisActor.GetDistance(PlayerRef)
-		if (dist > maxDist && !PlayerRef.IsOnMount())
+		if (GlobTeleport && dist > maxDist && !PlayerRef.IsOnMount())
 			;Ideally, we'd teleport to the nearest nav node behind player, but that's not exposed to papyrus as far as I can tell
 			;However, if we teleport into the ground, Skyrim will eventually place us somewhere valid
 			;Where's Unreal's LastAnchor property when you need it? :|
@@ -276,6 +295,8 @@ event OnUpdate()
 
 		RegisterForSingleUpdate(FollowUpdateTime)
 		return
+	else
+		SetSpeedup(ThisActor, false)
 	endif
 
 	RegisterForSingleUpdate(CombatWaitUpdateTime)
