@@ -264,9 +264,10 @@ event OnUpdate()
 			;Where's Unreal's LastAnchor property when you need it? :|
 			;Teleporting 32 units above player allows some leeway with slopes while preventing too many falling noises
 			float aZ = PlayerRef.GetAngleZ()
-			ThisActor.Disable(false)
-			ThisActor.EnableNoWait(true)
+			ThisActor.DisableNoWait(false)
 			ThisActor.MoveTo(PlayerRef, -192.0 * Math.Sin(aZ), -192.0 * Math.Cos(aZ), 32.0, true)
+			ThisActor.EnableNoWait(true)
+			ThisActor.EvaluatePackage()
 			SetSpeedup(ThisActor, false)
 			;Debug.Trace("foxFollowActor - initiating hyperjump!")
 		else
