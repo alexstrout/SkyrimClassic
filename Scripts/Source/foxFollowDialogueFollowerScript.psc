@@ -92,8 +92,8 @@ bool ClearCommandModeNextUpdate
 ; 			if (i > 0)
 ; 				stuff += "\n"
 ; 			endif
-; 			if (Followers[i].GetActorRef())
-; 				stuff += Followers[i].GetActorRef()
+; 			if (Followers[i].GetReference())
+; 				stuff += Followers[i].GetReference()
 ; 			else
 ; 				stuff += "None"
 ; 			endif
@@ -101,13 +101,13 @@ bool ClearCommandModeNextUpdate
 ; 		endwhile
 ; 		Debug.Messagebox(stuff)
 ; 		stuff = DialogueFollower.pFollowerAlias + "\n" + DialogueFollower.pAnimalAlias
-; 		if (DialogueFollower.pFollowerAlias.GetActorRef())
-; 			stuff += "\n" + DialogueFollower.pFollowerAlias.GetActorRef()
+; 		if (DialogueFollower.pFollowerAlias.GetReference())
+; 			stuff += "\n" + DialogueFollower.pFollowerAlias.GetReference()
 ; 		else
 ; 			stuff += "\nNone"
 ; 		endif
-; 		if (DialogueFollower.pAnimalAlias.GetActorRef())
-; 			stuff += "\n" + DialogueFollower.pAnimalAlias.GetActorRef()
+; 		if (DialogueFollower.pAnimalAlias.GetReference())
+; 			stuff += "\n" + DialogueFollower.pAnimalAlias.GetReference()
 ; 		else
 ; 			stuff += "\nNone"
 ; 		endif
@@ -204,11 +204,11 @@ function ModUpdate1()
 
 	;Grab our existing follower/animal followers from vanilla save
 	;Just use SetMultiFollower with a ForcedDestAlias to accomplish this - will safely ignore CheckForModUpdate
-	Actor FollowerActor = DialogueFollower.pFollowerAlias.GetActorRef()
+	Actor FollowerActor = DialogueFollower.pFollowerAlias.GetReference() as Actor
 	if (FollowerActor)
 		SetMultiFollower(FollowerActor, true, FollowerAlias0)
 	endif
-	FollowerActor = DialogueFollower.pAnimalAlias.GetActorRef()
+	FollowerActor = DialogueFollower.pAnimalAlias.GetReference() as Actor
 	if (FollowerActor)
 		SetMultiFollower(FollowerActor, false, FollowerAlias1)
 	endif
@@ -290,7 +290,7 @@ endFunction
 ReferenceAlias function GetFollowerAlias(ObjectReference FollowerRef)
 	int i = 0
 	while (i < Followers.Length)
-		if (Followers[i].GetRef() == FollowerRef)
+		if (Followers[i].GetReference() == FollowerRef)
 			return Followers[i]
 		endif
 		i += 1
@@ -303,7 +303,7 @@ ReferenceAlias function GetFirstFollowerAliasByType(bool isFollower)
 	Actor FollowerActor = None
 	int i = 0
 	while (i < Followers.Length)
-		FollowerActor = Followers[i].GetActorRef()
+		FollowerActor = Followers[i].GetReference() as Actor
 		if (FollowerActor && IsFollower(FollowerActor) == isFollower)
 			return Followers[i]
 		endif
@@ -316,7 +316,7 @@ endFunction
 ReferenceAlias function GetFirstFollowerAlias()
 	int i = 0
 	while (i < Followers.Length)
-		if (Followers[i].GetRef())
+		if (Followers[i].GetReference())
 			return Followers[i]
 		endif
 		i += 1
@@ -325,16 +325,16 @@ ReferenceAlias function GetFirstFollowerAlias()
 endFunction
 
 ;Attempt to untangle which follower we're talking about
-Actor function GetPreferredFollowerActorRef(bool isFollower)
+Actor function GetPreferredFollowerActorReference(bool isFollower)
 	if (isFollower)
-		return DialogueFollower.pFollowerAlias.GetActorRef()
+		return DialogueFollower.pFollowerAlias.GetReference() as Actor
 	endif
-	return DialogueFollower.pAnimalAlias.GetActorRef()
+	return DialogueFollower.pAnimalAlias.GetReference() as Actor
 endFunction
 
 ;Attempt to untangle which follower alias we're talking about
 ReferenceAlias function GetPreferredFollowerAlias(bool isFollower)
-	Actor FollowerActor = GetPreferredFollowerActorRef(isFollower)
+	Actor FollowerActor = GetPreferredFollowerActorReference(isFollower)
 	if (FollowerActor && IsFollower(FollowerActor) == isFollower)
 		;Debug.Trace("foxFollow got single preffered alias - IsFollower: " + isFollower)
 		return GetFollowerAlias(FollowerActor)
@@ -362,12 +362,12 @@ function CheckPreferredFollowerAlias(bool isFollower)
 		return
 	endif
 
-	;Note: FollowerAlias.GetActorRef() implied through GetFirstFollowerAliasByType
+	;Note: FollowerAlias.GetReference() as Actor implied through GetFirstFollowerAliasByType
 	ReferenceAlias FollowerAlias = GetFirstFollowerAliasByType(isFollower)
 	if (FollowerAlias)
 		;Debug.Trace("foxFollow CheckPreferredFollowerAlias set new alias - IsFollower: " + isFollower)
-		SetPreferredFollowerAlias(FollowerAlias.GetActorRef())
-	elseif (GetPreferredFollowerActorRef(isFollower))
+		SetPreferredFollowerAlias(FollowerAlias.GetReference() as Actor)
+	elseif (GetPreferredFollowerActorReference(isFollower))
 		;Debug.Trace("foxFollow CheckPreferredFollowerAlias cleared - IsFollower: " + isFollower)
 		ClearPreferredFollowerAlias(isFollower)
 	;else
@@ -379,9 +379,9 @@ endFunction
 ;Note: We now keep preferred follower populated at all times - this isn't recommended unless called from CheckPreferredFollowerAlias
 function ClearPreferredFollowerAlias(bool isFollower, Actor FollowerActor = None)
 	;Debug.Trace("foxFollow ClearPreferredFollowerAlias! - IsFollower: " + isFollower)
-	if (isFollower && (!FollowerActor || DialogueFollower.pFollowerAlias.GetRef() == FollowerActor))
+	if (isFollower && (!FollowerActor || DialogueFollower.pFollowerAlias.GetReference() == FollowerActor))
 		DialogueFollower.pFollowerAlias.Clear()
-	elseif (!FollowerActor || DialogueFollower.pAnimalAlias.GetRef() == FollowerActor)
+	elseif (!FollowerActor || DialogueFollower.pAnimalAlias.GetReference() == FollowerActor)
 		DialogueFollower.pAnimalAlias.Clear()
 	endif
 endFunction
@@ -405,7 +405,7 @@ int function GetNumFollowers()
 	Actor FollowerActor = None
 	int i = 0
 	while (i < Followers.Length)
-		FollowerActor = Followers[i].GetActorRef()
+		FollowerActor = Followers[i].GetReference() as Actor
 		if (FollowerActor)
 			if (IsFollower(FollowerActor))
 				outNumFollowers += 1
@@ -460,13 +460,13 @@ bool function ClearCommandMode()
 		return true
 	endif
 
-	Actor FollowerActor = GetPreferredFollowerActorRef(true)
+	Actor FollowerActor = GetPreferredFollowerActorReference(true)
 	if (FollowerActor && MeetsPreferredFollowerAliasConditions(FollowerActor))
 		;Debug.Trace("foxFollow ClearCommandMode waiting for Follower...")
 		ClearCommandModeNextUpdate = false
 		return false
 	endif
-	FollowerActor = GetPreferredFollowerActorRef(false)
+	FollowerActor = GetPreferredFollowerActorReference(false)
 	if (FollowerActor && MeetsPreferredFollowerAliasConditions(FollowerActor))
 		;Debug.Trace("foxFollow ClearCommandMode waiting for Animal...")
 		ClearCommandModeNextUpdate = false
@@ -588,7 +588,7 @@ function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, 
 	if (!FollowerAlias)
 		int i = 0
 		while (i < Followers.Length)
-			if (Followers[i].GetRef())
+			if (Followers[i].GetReference())
 				FollowerMultiFollowWait(Followers[i], isFollower, mode)
 			endif
 			i += 1
@@ -596,7 +596,7 @@ function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, 
 		return
 	endif
 
-	FollowerAlias.GetActorRef().SetActorValue("WaitingForPlayer", mode)
+	(FollowerAlias.GetReference() as Actor).SetActorValue("WaitingForPlayer", mode)
 	if (mode > 0)
 		;SetObjectiveDisplayed(10, abforce = true)
 		FollowerAlias.RegisterForSingleUpdateGameTime(WaitAroundForPlayerGameTime)
@@ -639,7 +639,7 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	if (!FollowerAlias)
 		int i = 0
 		while (i < Followers.Length)
-			Actor MultiActor = Followers[i].GetActorRef()
+			Actor MultiActor = Followers[i].GetReference() as Actor
 			if (!MultiActor)
 				;Just purge the slot anyways - iMessage -1 tells DismissMultiFollower to skip None Actor warning
 				DismissMultiFollower(Followers[i], true, -1, 0)
@@ -652,7 +652,7 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 	endif
 
 	;If we don't exist or we're dead, time for express dismissal! Hiyaa1
-	Actor FollowerActor = FollowerAlias.GetActorRef()
+	Actor FollowerActor = FollowerAlias.GetReference() as Actor
 	if (!FollowerActor || FollowerActor.IsDead())
 		;Fairly standard FollowerAliasScript.OnDeath / TrainedAnimalScript.OnDeath... More or less
 		if (FollowerActor)

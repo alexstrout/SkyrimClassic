@@ -32,7 +32,7 @@ endFunction
 
 function foxPetRemovePet(Actor ThatActor = None)
 	if (!ThatActor)
-		ThatActor = DialogueFollower.pAnimalAlias.GetActorRef()
+		ThatActor = DialogueFollower.pAnimalAlias.GetReference() as Actor
 	endif
 	if (ThatActor != Self as ObjectReference)
 		foxPetScriptHasAnimalMessage.Show()

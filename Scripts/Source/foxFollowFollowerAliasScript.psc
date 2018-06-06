@@ -40,7 +40,7 @@ function UpdateGlobalValueCache()
 endFunction
 
 event OnUpdateGameTime()
-	Actor ThisActor = Self.GetActorRef()
+	Actor ThisActor = Self.GetReference() as Actor
 	if (!ThisActor)
 		return
 	endif
@@ -54,7 +54,7 @@ event OnUpdateGameTime()
 endEvent
 
 event OnUnload()
-	Actor ThisActor = Self.GetActorRef()
+	Actor ThisActor = Self.GetReference() as Actor
 	if (!ThisActor)
 		return
 	endif
@@ -66,7 +66,7 @@ event OnUnload()
 endEvent
 
 event OnCombatStateChanged(Actor akTarget, int aeCombatState)
-	Actor ThisActor = Self.GetActorRef()
+	Actor ThisActor = Self.GetReference() as Actor
 
 	if (akTarget == PlayerRef)
 		DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(ThisActor), 0, 0)
@@ -82,7 +82,7 @@ endEvent
 
 event OnDeath(Actor akKiller)
 	;Just let DismissMultiFollower handle death via express dismissal - iMessage -1 tells DismissMultiFollower to skip any messages
-	DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(Self.GetActorRef()), -1, 0)
+	DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(Self.GetReference() as Actor), -1, 0)
 endEvent
 
 event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
@@ -94,7 +94,7 @@ endEvent
 function AddBookSpell(Book SomeBook, bool ShowMessage = true)
 	Spell BookSpell = SomeBook.GetSpell()
 	if (BookSpell)
-		Actor ThisActor = Self.GetActorRef()
+		Actor ThisActor = Self.GetReference() as Actor
 		if (!ThisActor.HasSpell(BookSpell))
 			LearnedSpellBookList.AddForm(SomeBook)
 			ThisActor.AddSpell(BookSpell)
@@ -114,13 +114,13 @@ endFunction
 event OnItemRemoved(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akDestContainer)
 	Book SomeBook = akBaseItem as Book
 	if (SomeBook)
-		RemoveBookSpell(SomeBook, RemoveCondition = LearnedSpellBookList.HasForm(SomeBook) && Self.GetActorRef().GetItemCount(akBaseItem) == 0)
+		RemoveBookSpell(SomeBook, RemoveCondition = LearnedSpellBookList.HasForm(SomeBook) && (Self.GetReference() as Actor).GetItemCount(akBaseItem) == 0)
 	endif
 endEvent
 function RemoveBookSpell(Book SomeBook, bool ShowMessage = true, bool RemoveCondition = true)
 	Spell BookSpell = SomeBook.GetSpell()
 	if (BookSpell)
-		Actor ThisActor = Self.GetActorRef()
+		Actor ThisActor = Self.GetReference() as Actor
 		;Note: ThisActor could theoretically be None here if we're cleaning up an invalid alias
 		;If this is the case, we're being called from RemoveAllBookSpells and LearnedSpellBookList will be reverted anyways, so we can safely skip this block
 		if (RemoveCondition && ThisActor && ThisActor.HasSpell(BookSpell))
@@ -150,7 +150,7 @@ function AddAllBookSpells()
 	;This isn't run often, so we can afford to be extra-cautious here
 	RemoveAllBookSpells()
 
-	Actor ThisActor = Self.GetActorRef()
+	Actor ThisActor = Self.GetReference() as Actor
 	int i = ThisActor.GetNumItems()
 	Book SomeBook = None
 	while (i)
@@ -172,7 +172,7 @@ function RemoveAllBookSpells()
 			RemoveBookSpell(SomeBook, false)
 		endif
 	endwhile
-	
+
 	;Fully revert just in case we missed any (we shouldn't! Unless our reference ended up None somehow. Oops!)
 	LearnedSpellBookList.Revert()
 endFunction
@@ -256,7 +256,7 @@ event OnActivate(ObjectReference akActivator)
 
 		;Set ourself as the preferred follower until we've quit gabbing
 		;CommandMode will also stay valid during this time, until either consumed by a command or cleared by ClearCommandMode
-		Actor ThisActor = Self.GetActorRef()
+		Actor ThisActor = Self.GetReference() as Actor
 		SetMinMagicka(ThisActor, FollowerAdjMagickaCost)
 		DialogueFollower.SetPreferredFollowerAlias(ThisActor)
 		;Debug.Trace("foxFollowActor - finished being activated by Player :(")
@@ -264,7 +264,7 @@ event OnActivate(ObjectReference akActivator)
 endEvent
 
 event OnUpdate()
-	Actor ThisActor = Self.GetActorRef()
+	Actor ThisActor = Self.GetReference() as Actor
 	if (!ThisActor)
 		RegisterForSingleUpdate(CombatWaitUpdateTime)
 		return
