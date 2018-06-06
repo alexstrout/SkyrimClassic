@@ -23,8 +23,16 @@ bool GlobAdjMagicka
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
 float Property FollowUpdateTime = 4.5 AutoReadOnly
 
+;Reset all FollowerAdj* values to 0
+;This should never be needed, but called on DialogueFollower's SetFollowerAlias and RemoveFollowerAlias as a safeguard
+function ResetAdjValues()
+	FollowerAdjSpeedMult = 0
+	FollowerAdjMagicka = 0
+	FollowerAdjMagickaCost = 0
+endFunction
+
 ;Update our cached global values so we don't have to call GetValue every update
-;Currently checked on DialogueFollower's CheckForModUpdate (and anywhere that's checked - e.g. our OnActivate)
+;Currently called on DialogueFollower's CheckForModUpdate (and anywhere that's called - e.g. our OnActivate)
 function UpdateGlobalValueCache()
 	GlobTeleport = DialogueFollower.GlobalTeleport.GetValue() as bool
 	GlobMaxDist = DialogueFollower.GlobalMaxDist.GetValue()
@@ -174,7 +182,7 @@ function SetMinMagicka(Actor ThisActor, int cost = -1, bool enumSpellsOnEqualCos
 	;Factor in GlobAdjMagicka - if not desired, treat every spell as zero-cost
 	;This way, existing code will either never set FollowerAdjMagicka, or clear it if previously set
 	if (!GlobAdjMagicka)
-		cost = -10
+		cost = 0
 		enumSpellsOnEqualCost = false
 	endif
 
@@ -206,7 +214,7 @@ function SetMinMagicka(Actor ThisActor, int cost = -1, bool enumSpellsOnEqualCos
 	endif
 
 	;Calculate our required magicka, and add that if necessary - also clear our old buff if no longer needed
-	int reqMagicka = cost + 10 - ThisActor.GetBaseActorValue("Magicka") as int
+	int reqMagicka = cost - ThisActor.GetBaseActorValue("Magicka") as int
 	if (reqMagicka == FollowerAdjMagicka)
 		return
 	endif

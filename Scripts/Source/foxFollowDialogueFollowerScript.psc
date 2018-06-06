@@ -126,7 +126,7 @@ event OnInit()
 endEvent
 
 ;See if we need to update from an old save (or first run from vanilla save)
-;Currently checked on OnInit, SetMultiFollower, and any current followers' OnActivate
+;Currently called on OnInit, SetMultiFollower, and any current followers' OnActivate
 function CheckForModUpdate()
 	if (foxFollowVer < foxFollowScriptVer)
 		;Set foxFollowVer ASAP to avoid mod updates being run twice from two threads
@@ -245,6 +245,10 @@ endFunction
 ;Set follower alias by ref - returns true if successful
 bool function SetFollowerAlias(ReferenceAlias FollowerAlias, ObjectReference FollowerRef)
 	if (FollowerAlias.ForceRefIfEmpty(FollowerRef))
+		;Make sure our ActorValue adjustments are reset - must call this before AddAllBookSpells
+		;This should never be needed, but here just in case these were somehow left non-zero
+		(FollowerAlias as foxFollowFollowerAliasScript).ResetAdjValues()
+
 		;Add back all our book-learned spells again - no real way to keep track of these when not following
 		;This has the added bonus of retroactively applying to previously dismissed vanilla followers carrying spell tomes
 		(FollowerAlias as foxFollowFollowerAliasScript).AddAllBookSpells()
@@ -264,6 +268,10 @@ function RemoveFollowerAlias(ReferenceAlias FollowerAlias)
 
 	;Also remove all our book-learned spells - no real way to keep track of these when not following
 	(FollowerAlias as foxFollowFollowerAliasScript).RemoveAllBookSpells()
+
+	;Finally make sure our ActorValue adjustments are reset - must call this after RemoveAllBookSpells
+	;This should never be needed, but here just in case these were somehow left non-zero
+	(FollowerAlias as foxFollowFollowerAliasScript).ResetAdjValues()
 
 	;Clear!
 	FollowerAlias.Clear()
@@ -353,19 +361,17 @@ function CheckPreferredFollowerAlias(bool isFollower)
 		;Debug.Trace("foxFollow CheckPreferredFollowerAlias found valid alias - IsFollower: " + isFollower)
 		return
 	endif
-	if (!GetPreferredFollowerActorRef(isFollower))
-		;Debug.Trace("foxFollow CheckPreferredFollowerAlias already cleared! - IsFollower: " + isFollower)
-		return
-	endif
 
 	;Note: FollowerAlias.GetActorRef() implied through GetFirstFollowerAliasByType
 	ReferenceAlias FollowerAlias = GetFirstFollowerAliasByType(isFollower)
 	if (FollowerAlias)
 		;Debug.Trace("foxFollow CheckPreferredFollowerAlias set new alias - IsFollower: " + isFollower)
 		SetPreferredFollowerAlias(FollowerAlias.GetActorRef())
-	else
+	elseif (GetPreferredFollowerActorRef(isFollower))
 		;Debug.Trace("foxFollow CheckPreferredFollowerAlias cleared - IsFollower: " + isFollower)
 		ClearPreferredFollowerAlias(isFollower)
+	;else
+	;	;Debug.Trace("foxFollow CheckPreferredFollowerAlias already cleared! - IsFollower: " + isFollower)
 	endif
 endFunction
 
@@ -413,7 +419,7 @@ int function GetNumFollowers()
 endFunction
 
 ;Update follower count (whether we can recruit new followers) based on how many followers we actually have - returns true if at capacity
-;Currently checked on SetMultiFollower, DismissMultiFollowerClearAlias, and any current followers' OnActivate
+;Currently called on SetMultiFollower, DismissMultiFollowerClearAlias, and any current followers' OnActivate
 bool function UpdateFollowerCount()
 	if (GetNumFollowers() >= Followers.Length)
 		DialogueFollower.pPlayerFollowerCount.SetValue(1)
@@ -660,6 +666,10 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 
 	;Oops we should probably reset SpeedMult hehe
 	(FollowerAlias as foxFollowFollowerAliasScript).SetSpeedup(FollowerActor, false)
+
+	;And call a full SetMinMagicka just in case our book-learned spells ended up in a bad state (e.g. reverted - but then we'd have other problems...)
+	;This should never be needed (and will likely do nothing), but a little extra safety never hurts
+	(FollowerAlias as foxFollowFollowerAliasScript).SetMinMagicka(FollowerActor)
 
 	;Make sure we're actually a follower (might have gotten mixed up somehow - could happen if we try to trick the script by quickly talking to the wrong type)
 	;Actually, we won't get confused by talking to the wrong type - preferred follower is always filled now!
