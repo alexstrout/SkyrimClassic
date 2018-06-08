@@ -179,10 +179,10 @@ endFunction
 
 ;Many followers have classes that don't put any weight into Magicka - so make sure we have the minimum required to at least cast a spell
 function SetMinMagicka(Actor ThisActor, int cost = -1, bool enumSpellsOnEqualCost = false)
-	;Factor in GlobAdjMagicka - if not desired, treat every spell as zero-cost
+	;Factor in GlobAdjMagicka - if not desired, treat every spell as zero-cost (actually negative cost, so we force-check)
 	;This way, existing code will either never set FollowerAdjMagicka, or clear it if previously set
 	if (!GlobAdjMagicka)
-		cost = 0
+		cost = -2
 		enumSpellsOnEqualCost = false
 	endif
 
