@@ -1,0 +1,42 @@
+Follower AI Tweaks
+------
+Implements a number of tweaks to allow for smoother AI following in large groups.
+
+[h1]Additional Information[/h1]
+Tweaks the following GMSTs:
+[list][*]fAIMoveDistanceToRecalcFollowPath: 300.0000 -> 100.0000
+	More responsive close-range following, matches vanilla fAIMoveDistanceToRecalcTravelToActor
+[*]fBumpReactionSmallDelayTime: 1.0000 -> 0.2500
+[*]fBumpReactionSmallWaitTimer: 3.0000 -> 0.7500
+	More responsive "move away" behavior when bumping into AI
+[*]fFollowerSpacingAtDoors: 200.0000 -> 96.0000
+[*]fFollowMatchSpeedZoneWidth: 128.0000 -> 384.0000
+[*]fFollowSlowdownZoneWidth: 150.0000 -> 96.0000
+	Smoother close-range following (e.g. when walking)
+[*]fFollowSpaceBetweenFollowers: 192.0000 -> 96.0000
+	Much smoother following with 2 or more followers
+[*]fSummonedCreatureMaxFollowDist: 400.0000 -> 320.0000
+[*]fSummonedCreatureMinFollowDist: 250.0000 -> 192.0000
+	Matches new PlayerFollwerPackage ranges below
+[*]iNumberActorsAllowedToFollowPlayer: 6 -> 14[/list]
+	Unsure, but MFSTL does allow 10 followers instead of 2, so bumped up by 8
+
+Also tweaks PlayerFollowerPackage:
+[list][*]Min Radius: 256.0000 -> 192.0000
+[*]Max Radius: 384.0000 -> 320.0000
+	Tighter following behavior
+[*]Random conversations: False -> True
+	Allows followers to chat with other NPCs like normal[/list]
+
+The above tweaks primarily apply to recruited followers, and may or may not apply to quest followers on a case-by-case basis (they typically use all sorts of different AI packages).
+
+[h1]Compatibility[/h1]
+Should be compatible with anything that doesn't also mess with follower AI.
+(Specifically, anything that doesn't modify the above GMSTs or PlayerFollowerPackage)
+
+[h1]Uninstall Steps[/h1]
+Simply remove the plugin as normal; no save cleaning necessary.
+------
+Revision History:
+r1:
+-- Initial release.

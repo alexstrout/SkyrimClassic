@@ -1,0 +1,29 @@
+Spell: Write Spell Tome
+------
+Implements the ability to write Spell Tomes from equipped spells in exchange for a Dragon Soul.
+
+[h1]Requirements[/h1]
+Requires SKSE: http://skse.silverlock.org/
+
+[h1]Usage[/h1]
+Equip the Lesser Power "Write Spell Tome" in either hand, and a desired spell in the other hand.
+After casting, the Spell Tome teaching that spell (if one exists) will appear in your inventory.
+
+A Dragon Soul will be spent if a Spell Tome was successfully written; otherwise, nothing happens.
+
+[h1]Additional Information[/h1]
+Intended to be used with MFSTL to distribute otherwise unique, one-time Spell Tomes to followers:
+http://steamcommunity.com/sharedfiles/filedetails/?id=13413 //TODO put actual ID here
+
+However, this could just be used on its own if you otherwise had some use for writing Spell Tomes.
+
+[h1]Compatibility[/h1]
+Currently, only vanilla Spell Tomes are supported.
+For the merge-savvy, the FLST of supported Books is "1foxFollowSpellTomeList".
+
+[h1]Uninstall Steps[/h1]
+Simply remove the plugin as normal; no save cleaning necessary.
+------
+Revision History:
+r1:
+-- Initial release.

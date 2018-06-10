@@ -39,7 +39,8 @@ For performance reasons, changes only take effect after talking to any follower.
 Setting 1foxFollowMaxDist to -1 will completely disable catch-up / teleport functionality.
 
 [h1]Compatibility[/h1]
-Should be compatible with anything that doesn't modify DialogueFollower or DialogueFollowerScript.
+Should be compatible with anything that isn't also a follower overhaul. :)
+(Specifically, anything that doesn't modify DialogueFollower or DialogueFollowerScript)
 
 [h1]Uninstall Steps[/h1]
 Dismiss all followers in your party (very important!), then remove the plugin as normal.
