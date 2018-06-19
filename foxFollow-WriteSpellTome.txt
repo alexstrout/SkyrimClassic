@@ -13,7 +13,7 @@ A Dragon Soul will be spent if a Spell Tome was successfully written; otherwise,
 
 [h1]Additional Information[/h1]
 Intended to be used with MFSTL to distribute otherwise unique, one-time Spell Tomes to followers:
-http://steamcommunity.com/sharedfiles/filedetails/?id=13413 //TODO put actual ID here
+https://steamcommunity.com/sharedfiles/filedetails/?id=1415931452
 
 However, this could just be used on its own if you otherwise had some use for writing Spell Tomes.
 
