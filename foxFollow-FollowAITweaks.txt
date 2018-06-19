@@ -4,26 +4,26 @@ Implements a number of tweaks to allow for smoother AI following in large groups
 
 [h1]Additional Information[/h1]
 Tweaks the following GMSTs:
-[list][*]fBumpReactionSmallDelayTime: 1.0000 -> 0.2500
-[*]fBumpReactionSmallWaitTimer: 3.0000 -> 0.7500
+[list][*][b]fBumpReactionSmallDelayTime[/b]: 1.0000 -> 0.2500
+[*][b]fBumpReactionSmallWaitTimer[/b]: 3.0000 -> 0.7500
 	More responsive "move away" behavior when bumping into AI
-[*]fFollowerSpacingAtDoors: 200.0000 -> 96.0000
-[*]fFollowMatchSpeedZoneWidth: 128.0000 -> 384.0000
-[*]fFollowSlowdownZoneWidth: 150.0000 -> 96.0000
+[*][b]fFollowerSpacingAtDoors[/b]: 200.0000 -> 96.0000
+[*][b]fFollowMatchSpeedZoneWidth[/b]: 128.0000 -> 384.0000
+[*][b]fFollowSlowdownZoneWidth[/b]: 150.0000 -> 96.0000
 	Smoother close-range following (e.g. when walking)
-[*]fFollowSpaceBetweenFollowers: 192.0000 -> 96.0000
+[*][b]fFollowSpaceBetweenFollowers[/b]: 192.0000 -> 96.0000
 	Much smoother following with 2 or more followers
-[*]fSummonedCreatureMaxFollowDist: 400.0000 -> 320.0000
-[*]fSummonedCreatureMinFollowDist: 250.0000 -> 192.0000
+[*][b]fSummonedCreatureMaxFollowDist[/b]: 400.0000 -> 320.0000
+[*][b]fSummonedCreatureMinFollowDist[/b]: 250.0000 -> 192.0000
 	Matches new PlayerFollwerPackage ranges below
-[*]iNumberActorsAllowedToFollowPlayer: 6 -> 14[/list]
-	Unsure, but MFSTL does allow 10 followers instead of 2, so bumped up by 8
+[*][b]iNumberActorsAllowedToFollowPlayer[/b]: 6 -> 14
+	Unsure, but MFSTL does allow 10 followers instead of 2, so bumped up by 8[/list]
 
 Also tweaks PlayerFollowerPackage:
-[list][*]Min Radius: 256.0000 -> 192.0000
-[*]Max Radius: 384.0000 -> 320.0000
+[list][*][b]Min Radius[/b]: 256.0000 -> 192.0000
+[*][b]Max Radius[/b]: 384.0000 -> 320.0000
 	Tighter following behavior
-[*]Random conversations: False -> True
+[*][b]Random conversations[/b]: False -> True
 	Allows followers to chat with other NPCs like normal[/list]
 
 The above tweaks primarily apply to recruited followers, and may or may not apply to quest followers on a case-by-case basis (they typically use all sorts of different AI packages).
