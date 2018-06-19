@@ -20,10 +20,11 @@ Should work in any multi-follower mod that supports vanilla animal followers.
 
 [h1]Optional Plugins[/h1]
 By default, foxes have rather annoying idle breathing sounds, but can be silenced using this plugin:
-http://steamcommunity.com/sharedfiles/filedetails/?id=74276765
+https://steamcommunity.com/sharedfiles/filedetails/?id=74276765
 
-Compatible with NorthStar's Followers Keep Up plugin (uses built-in follower scripts):
-http://steamcommunity.com/sharedfiles/filedetails/?id=10172
+To command both foxes at once (with catch-up / teleport functionality), try MFSTL:
+https://steamcommunity.com/sharedfiles/filedetails/?id=1415931452
+(Note: Foxes can not learn spells - I couldn't figure out how to define animations to cast them!)
 
 [h1]Uninstall Steps[/h1]
 Simply dismiss any fox present in your party, then remove the plugin as normal.
@@ -34,6 +35,10 @@ https://www.nexusmods.com/skyrim/mods/76776
 The bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
 ------
 Revision History:
+r13:
+-- Fixed very minor script goof
+-- Set 1foxPetRace HP regen to playable races' default of 0.7
+
 r12:
 -- Minor script cleanup
 
