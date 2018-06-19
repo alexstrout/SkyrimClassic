@@ -31,7 +31,7 @@ Thus, if needed, followers' minimum magicka is adjusted to meet their most expen
 foxFollow comes with a few config variables:
 [list][*][b]1foxFollowTeleport[/b] - enable teleporting? [i]0/1 (default 1)[/i]
 [*][b]1foxFollowMaxDist[/b] - teleport distance, speedup distance is 0.5x this [i](default 4096.0)[/i]
-[*][b]1foxFollowAdjMagicka[/b] - adjust magicka for learned spells? [i]0/1 (default 1)[/i][/olist]
+[*][b]1foxFollowAdjMagicka[/b] - adjust magicka for learned spells? [i]0/1 (default 1)[/i][/list]
 Type "set [b]someVar[/b] to [i]someVal[/i]" in console (~ key) to adjust config variables.
 e.g. "set 1foxFollowAdjMagicka to 0" to disable follower magicka adjustment for learned spells.
 
@@ -53,22 +53,24 @@ https://www.nexusmods.com/skyrim/mods/76776
 It's possible to confuse the plugin by giving one follower an order and, before they've finished saying their line, immediately exiting dialogue and talking to another follower. This is because the vanilla DialogueFollower system:
 [olist][*]Only differentiates between a single normal/animal follower
 [*]Only executes commands after a follower has finished saying their line[/olist]
-The plugin tracks who you're giving orders to by whom you last initiated dialogue with. Thus, if you tell Alice to "wait here" and immediately talk to Bob, the command will apply to Bob once Alice has finished talking.
+The plugin tracks who you're giving orders to by whom you last initiated dialogue with.
+Thus, if you tell Alice to "wait here" and immediately talk to Bob, the command will apply to Bob once Alice has finished talking.
 (Note: Non-issue if Alice is a dude and Bob is a dog - we can always tell them apart, per above)
 
-A similar situation occurs when holding "Sprint" to command all followers - if you give a command and then immediately initiate dialogue again, the "Sprint" state can change before the command is executed.
+A similar situation occurs holding "Sprint" to command all followers - if you give a command and then immediately initiate dialogue again, the "Sprint" state can change before the command is executed.
 
 Worst-case scenario though, nothing breaks! :)
 
 [h1]Acknowledgments[/h1]
 NorthStar's Followers Keep Up:
-http://steamcommunity.com/sharedfiles/filedetails/?id=10172
+https://steamcommunity.com/sharedfiles/filedetails/?id=10172
 Catch-up / teleport functionality was heavily influenced by this plugin. Good stuff!
 
 TheTalkieToaster's Companion Share & Recruit:
 https://steamcommunity.com/sharedfiles/filedetails/?id=119922465
 https://www.nexusmods.com/skyrim/mods/29836
-I used the original Oblivion CSR for years, and can't imagine going back and playing Oblivion without it. The Skyrim version is pretty rad too, and deserves a mention!
+I used the original Oblivion CSR for years, and can't imagine going back and playing without it.
+The Skyrim version is pretty rad too, and deserves a mention!
 ------
 Revision History:
 r1:
