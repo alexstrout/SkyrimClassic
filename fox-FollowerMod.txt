@@ -46,6 +46,9 @@ Should be compatible with anything that isn't also a follower overhaul. :P
 By default, 2 or more followers yields derpy follower AI, which can be mitigated using this plugin:
 https://steamcommunity.com/sharedfiles/filedetails/?id=1416666894
 
+It is also possible to write spell tomes from (vanilla) equipped spells using this plugin:
+https://steamcommunity.com/sharedfiles/filedetails/?id=1446025868
+
 [h1]Uninstall Steps[/h1]
 Dismiss all followers in your party (very important!), then remove the plugin as normal.
 Optionally, use ReSaver (or similar) to remove any leftover references in your save:
