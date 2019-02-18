@@ -2,6 +2,10 @@ Spell: Write Spell Tome
 ------
 Implements the ability to write spell tomes from equipped spells in exchange for a Dragon Soul.
 
+[h1][u]Skyrim Special Edition Note[/u][/h1]
+[b]This will eventually make its way to SSE - I'll update this section when it does!
+As it would require SKSE64, it would unfortunately be compatible with PC only.[/b]
+
 [h1]Requirements[/h1]
 Requires SKSE: http://skse.silverlock.org/
 

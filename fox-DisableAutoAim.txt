@@ -2,12 +2,13 @@ No Auto-Aim
 ------
 Disables archery auto-aiming.
 
+[h1][u]Skyrim Special Edition Version[/u][/h1]
+[b]https://bethesda.net/en/mods/SKYRIM/mod-detail/3031493
+(ported by Lou the Lou - thank you!)[/b]
+
 [h1]Additional Information[/h1]
 Normally, Skyrim automatically aims your arrows toward enemies near your crosshair.
 This plugin simply sets the auto-aim angles for ranged weaponry to zero, so that arrows always shoot where you're actually aiming.
-
-Skyrim Special Edition port by Lou the Lou: (thank you!)
-https://bethesda.net/en/mods/SKYRIM/mod-detail/3031493
 
 [h1]Uninstall Steps[/h1]
 Simply remove the plugin as normal; no save cleaning necessary.

@@ -2,6 +2,10 @@ Follower AI Tweaks
 ------
 Implements a number of tweaks to allow for smoother AI following in large groups.
 
+[h1][u]Skyrim Special Edition Note[/u][/h1]
+[b]This will eventually make its way to SSE - I'll update this section when it does!
+As it would not rely on SKSE64, it should be compatible with all platforms.[/b]
+
 [h1]Additional Information[/h1]
 Tweaks the following GMSTs:
 [list][*][b]fBumpReactionSmallDelayTime[/b]: 1.0000 -> 0.2500

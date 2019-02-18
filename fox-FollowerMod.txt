@@ -3,6 +3,11 @@ Multi-Follower Spell Tome Learning
 Implements simple multi-follower support, with spell tome learning and catch-up / teleporting.
 Supports any follower (or animal) that uses the vanilla DialogueFollower system.
 
+[h1][u]Skyrim Special Edition Note[/u][/h1]
+[b]This will eventually make its way to SSE - I'll update this section when it does!
+As it would require SKSE64, it would unfortunately be compatible with PC only.
+However, a non-SKSE "lite" version that forgoes Spell Tome Learning should be possible.[/b]
+
 [h1]Requirements[/h1]
 Requires SKSE: http://skse.silverlock.org/
 
