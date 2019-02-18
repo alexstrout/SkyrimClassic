@@ -7,13 +7,21 @@ event OnEffectStart(Actor akTarget, Actor akCaster)
 		return
 	endif
 
-	Form SomeObject = akTarget.GetEquippedObject(1)
-	if (SomeObject)
-		akTarget.UnequipItem(SomeObject)
+	;Unequip weapon in right hand...
+	Form SomeForm = akTarget.GetEquippedWeapon()
+	if (SomeForm)
+		akTarget.UnequipItem(SomeForm)
 	endif
 
-	SomeObject = akTarget.GetEquippedObject(0)
-	if (SomeObject)
-		akTarget.UnequipItem(SomeObject)
+	;... and left hand as well
+	SomeForm = akTarget.GetEquippedWeapon(true)
+	if (SomeForm)
+		akTarget.UnequipItem(SomeForm)
+	else
+		;... and shield too! Why not
+		SomeForm = akTarget.GetEquippedShield()
+		if (SomeForm)
+			akTarget.UnequipItem(SomeForm)
+		endif
 	endif
 endEvent
