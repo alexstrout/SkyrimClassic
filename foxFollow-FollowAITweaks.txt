@@ -40,6 +40,9 @@ Should be compatible with anything that doesn't also mess with follower AI.
 Simply remove the plugin as normal; no save cleaning necessary.
 ------
 Revision History:
+r3:
+-- Oops
+
 r2:
 -- Flipped [b]Random conversations[/b] in PlayerFollowerPackage back to False. Repeatedly chatty groups could start to get a little annoying!
 -- Flipped [b]Maintain Speed at Goal[/b] in PlayerFollowerPackage to True - the default of False appears to cause conflicts in their pacing when nearing the player, particularly if the player is running.
