@@ -27,8 +27,7 @@ Tweaks the following GMSTs:
 Also tweaks PlayerFollowerPackage:
 [list][*][b]Min Radius[/b]: 256.0000 -> 192.0000
 [*][b]Max Radius[/b]: 384.0000 -> 320.0000
-[*][b]Maintain Speed at Goal[/b]: False -> True
-	Tighter following behavior
+	Tighter following behavior[/list]
 
 The above tweaks primarily apply to recruited followers, and may or may not apply to quest followers on a case-by-case basis (they typically use all sorts of different AI packages).
 
@@ -40,6 +39,9 @@ Should be compatible with anything that doesn't also mess with follower AI.
 Simply remove the plugin as normal; no save cleaning necessary.
 ------
 Revision History:
+r4:
+-- Reverted [b]Maintain Speed at Goal[/b] in PlayerFollowerPackage back to False.
+
 r3:
 -- Oops
 
