@@ -17,6 +17,7 @@ Tweaks the following GMSTs:
 	Smoother close-range following (e.g. when walking)
 [*][b]fFollowSpaceBetweenFollowers[/b]: 192.0000 -> 96.0000
 	Much smoother following with 2 or more followers
+[*][b]fFollowStartSprintDistance[/b]: 500.0000 -> 384.0000
 [*][b]fSummonedCreatureMaxFollowDist[/b]: 400.0000 -> 320.0000
 [*][b]fSummonedCreatureMinFollowDist[/b]: 250.0000 -> 192.0000
 	Matches new PlayerFollwerPackage ranges below
@@ -26,9 +27,8 @@ Tweaks the following GMSTs:
 Also tweaks PlayerFollowerPackage:
 [list][*][b]Min Radius[/b]: 256.0000 -> 192.0000
 [*][b]Max Radius[/b]: 384.0000 -> 320.0000
+[*][b]Maintain Speed at Goal[/b]: False -> True
 	Tighter following behavior
-[*][b]Random conversations[/b]: False -> True
-	Allows followers to chat with other NPCs like normal[/list]
 
 The above tweaks primarily apply to recruited followers, and may or may not apply to quest followers on a case-by-case basis (they typically use all sorts of different AI packages).
 
@@ -40,5 +40,10 @@ Should be compatible with anything that doesn't also mess with follower AI.
 Simply remove the plugin as normal; no save cleaning necessary.
 ------
 Revision History:
+r2:
+-- Flipped [b]Random conversations[/b] in PlayerFollowerPackage back to False. Repeatedly chatty groups could start to get a little annoying!
+-- Flipped [b]Maintain Speed at Goal[/b] in PlayerFollowerPackage to True - the default of False appears to cause conflicts in their pacing when nearing the player, particularly if the player is running.
+-- Decreased [b]fFollowStartSprintDistance[/b] to 384 (default 500), to be more in line with new following distances and remain closer to player when navigating complex routes.
+
 r1:
 -- Initial release.
