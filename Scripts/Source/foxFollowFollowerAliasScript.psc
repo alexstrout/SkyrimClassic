@@ -20,9 +20,16 @@ bool GlobTeleport
 float GlobMaxDist
 bool GlobAdjMagicka
 
+float Property WaitAroundForPlayerGameTime = 72.0 AutoReadOnly
 float Property CombatWaitUpdateTime = 12.0 AutoReadOnly
-float Property FollowUpdateTime = 4.5 AutoReadOnly
+float Property FollowUpdateTime = 4.0 AutoReadOnly
 
+float Property TeleportDist = -512.0 AutoReadOnly
+float Property TeleportMinMaxAngle = 30.0 AutoReadOnly
+
+;================
+;Variable Management
+;================
 ;Reset all FollowerAdj* values to 0
 ;This should never be needed, but called on DialogueFollower's SetFollowerAlias and RemoveFollowerAlias as a safeguard
 function ResetAdjValues()
@@ -32,13 +39,50 @@ function ResetAdjValues()
 endFunction
 
 ;Update our cached global values so we don't have to call GetValue every update
-;Currently called on DialogueFollower's CheckForModUpdate (and anywhere that's called - e.g. our OnActivate)
+;Currently called (for all followers) on DialogueFollower's CheckForModUpdate (and anywhere that's called - e.g. our OnActivate)
 function UpdateGlobalValueCache()
 	GlobTeleport = DialogueFollower.GlobalTeleport.GetValue() as bool
 	GlobMaxDist = DialogueFollower.GlobalMaxDist.GetValue()
 	GlobAdjMagicka = DialogueFollower.GlobalAdjMagicka.GetValue() as bool
 endFunction
 
+;================
+;Manual State Management
+;================
+;Track last follower activated so we have something to fall back on later - and many other important things...
+event OnActivate(ObjectReference akActivator)
+	;Debug.Trace("foxFollowActor - activated! :|")
+	if (akActivator == PlayerRef)
+		;Debug.Trace("foxFollowActor - activated by Player! :D")
+		;Set CommandMode based on hotkey being held down - do this first so it's as responsive as possible
+		int commandMode = 0
+		if (DialogueFollower.RequestingCommandMode())
+			commandMode = 1
+			DialogueFollower.FollowerCommandModeMessage.Show()
+		endif
+		DialogueFollower.SetCommandMode(commandMode)
+
+		;Check for mod update, and re-tally our followers (and update our GV cache, which is also applied to all followers)
+		DialogueFollower.CheckForModUpdate()
+		DialogueFollower.UpdateFollowerCount()
+
+		;Set ourself as the preferred follower
+		;CommandMode will also stay valid the whole time we're in dialogue, until either consumed by a command or cleared on DialogueFollower update by ClearCommandMode
+		Actor ThisActor = Self.GetReference() as Actor
+		DialogueFollower.SetPreferredFollowerAlias(ThisActor)
+		SetMinMagicka(ThisActor, FollowerAdjMagickaCost)
+
+		;Finally, make sure our OnUpdate is alive, just in case - use slower interval, since we're just beginning dialogue and will probably be near player for a bit
+		SetSpeedup(ThisActor, false) ;We should probably immediately stop zooming around too
+		RegisterForSingleUpdate(CombatWaitUpdateTime)
+		;Debug.Trace("foxFollowActor - finished being activated by Player :(")
+	endif
+endEvent
+
+;================
+;Automatic State Management
+;================
+;Dismiss follower if waiting around too long, like vanilla behavior
 event OnUpdateGameTime()
 	Actor ThisActor = Self.GetReference() as Actor
 	if (!ThisActor)
@@ -53,6 +97,7 @@ event OnUpdateGameTime()
 	endif
 endEvent
 
+;Wait around if we unload... while waiting... like vanilla behavior (hmm)
 event OnUnload()
 	Actor ThisActor = Self.GetReference() as Actor
 	if (!ThisActor)
@@ -60,31 +105,45 @@ event OnUnload()
 	endif
 
 	;Per Vanilla - "if follower unloads while waiting for the player, wait three days then dismiss him"
+	;We're actually instead gonna just register our WaitAroundForPlayerGameTime here - no reason follower should wander off if they're still loaded
 	if (ThisActor.GetActorValue("WaitingForPlayer") == 1)
-		DialogueFollower.FollowerMultiFollowWait(Self, DialogueFollower.IsFollower(ThisActor), 1)
+		;DialogueFollower.FollowerMultiFollowWait(Self, DialogueFollower.IsFollower(ThisActor), 1)
+		RegisterForSingleUpdateGameTime(WaitAroundForPlayerGameTime)
 	endif
 endEvent
+event OnLoad()
+	UnRegisterForUpdateGameTime()
+endEvent
 
+;Dismiss follower if in combat with player, like vanilla behavior
+;Note: If we're receiving this event, then our Actor is guaranteed be alive and well
 event OnCombatStateChanged(Actor akTarget, int aeCombatState)
 	Actor ThisActor = Self.GetReference() as Actor
 
+	;Per Vanilla - "Dismissing follower because he is now attacking the player"
 	if (akTarget == PlayerRef)
 		DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(ThisActor), 0, 0)
 	endif
 
 	;HACK Begin registering combat check to fix getting stuck in combat (bug in bleedouts for animals)
-	;This should be bloat-friendly as it will never fire more than once at a time, even if OnActivate is called multiple times in this time frame
+	;This should be bloat-friendly as it will never fire more than once at a time, even if OnCombatStateChanged is called multiple times in this time frame
 	if (aeCombatState == 1)
-		SetSpeedup(ThisActor, false)
+		SetSpeedup(ThisActor, false) ;We should probably immediately stop zooming around too
 		RegisterForSingleUpdate(CombatWaitUpdateTime)
 	endif
 endEvent
 
+;Dismiss follower if s/he somehow dies, like vanilla behavior
+;Note: If we're receiving this event, then our Actor is guaranteed be alive and well... Wait
 event OnDeath(Actor akKiller)
+	;Per Vanilla - "Clearing the follower because the player killed him."
 	;Just let DismissMultiFollower handle death via express dismissal - iMessage -1 tells DismissMultiFollower to skip any messages
 	DialogueFollower.DismissMultiFollower(Self, DialogueFollower.IsFollower(Self.GetReference() as Actor), -1, 0)
 endEvent
 
+;================
+;Spell Tome Learning
+;================
 event OnItemAdded(Form akBaseItem, int aiItemCount, ObjectReference akItemReference, ObjectReference akSourceContainer)
 	Book SomeBook = akBaseItem as Book
 	if (SomeBook)
@@ -238,31 +297,13 @@ function SetMinMagicka(Actor ThisActor, int cost = -1, bool enumSpellsOnEqualCos
 	;Debug.Trace("foxFollowActor - magicka stuff buffing by required minimum calc " + FollowerAdjMagicka)
 endFunction
 
-;Track last follower activated so we have something to fall back on later
-event OnActivate(ObjectReference akActivator)
-	;Debug.Trace("foxFollowActor - activated! :|")
-	if (akActivator == PlayerRef)
-		;Debug.Trace("foxFollowActor - activated by Player! :D")
-		DialogueFollower.CheckForModUpdate()
-		DialogueFollower.UpdateFollowerCount()
-
-		;Set CommandMode based on hotkey being held down
-		int commandMode = 0
-		if (DialogueFollower.RequestingCommandMode())
-			commandMode = 1
-			DialogueFollower.FollowerCommandModeMessage.Show()
-		endif
-		DialogueFollower.SetCommandMode(commandMode)
-
-		;Set ourself as the preferred follower until we've quit gabbing
-		;CommandMode will also stay valid during this time, until either consumed by a command or cleared by ClearCommandMode
-		Actor ThisActor = Self.GetReference() as Actor
-		SetMinMagicka(ThisActor, FollowerAdjMagickaCost)
-		DialogueFollower.SetPreferredFollowerAlias(ThisActor)
-		;Debug.Trace("foxFollowActor - finished being activated by Player :(")
-	endif
-endEvent
-
+;================
+;OnUpdate Loop - Follower Catch-up / Teleporting, Animal Bleedout Fix
+;Note: We use continual SingleUpdate registrations to avoid issues listed here: https://www.creationkit.com/index.php?title=RegisterForUpdate_-_Form#Important_Warning
+;================
+;Handle catch-up when following player, or combat bleedout fix if in combat
+;Note: This update loop is always running, in case WaitingForPlayer is tampered with externally, or our Actor is temporarily invalid (e.g. level transitions)
+;However, CombatWaitUpdateTime is very non-intensive, with a heartbeat only 5 times per minute
 event OnUpdate()
 	Actor ThisActor = Self.GetReference() as Actor
 	if (!ThisActor)
@@ -281,7 +322,9 @@ event OnUpdate()
 	&& ThisActor.GetActorValue("WaitingForPlayer") == 0 \
 	&& !ThisActor.IsDoingFavor())
 		float maxDist = GlobMaxDist ;4096.0
-		if (!PlayerRef.HasLOS(ThisActor))
+		;Note: They may starve other scripts of LOS picks if we have many followers - see https://www.creationkit.com/index.php?title=RegisterForLOS_-_Form
+		;However, as we're doing this on a fairly forviging interval (and not registering for LOS events), I think this should be OK
+		if (dist < maxDist && !PlayerRef.HasLOS(ThisActor))
 			maxDist *= 0.5
 		endif
 		float dist = ThisActor.GetDistance(PlayerRef)
@@ -290,13 +333,18 @@ event OnUpdate()
 			;However, if we teleport into the ground, Skyrim will eventually place us somewhere valid
 			;Where's Unreal's LastAnchor property when you need it? :|
 			;Teleporting 32 units above player allows some leeway with slopes while preventing too many falling noises
-			float aZ = PlayerRef.GetAngleZ()
-			ThisActor.Disable(false)
-			ThisActor.MoveTo(PlayerRef, -192.0 * Math.Sin(aZ), -192.0 * Math.Cos(aZ), 32.0, true)
-			ThisActor.Enable(true)
-			ThisActor.EvaluatePackage()
-			SetSpeedup(ThisActor, false)
+			;Turns out a simple Disable/Enable does the trick - d'oh!
 			;Debug.Trace("foxFollowActor - initiating hyperjump!")
+			ThisActor.Disable(true)
+			SetSpeedup(ThisActor, false)
+
+			;Check dist again, and only actually teleport if we're still out of range after the fadeout
+			if (ThisActor.GetDistance(PlayerRef) > maxDist)
+				float aZ = PlayerRef.GetAngleZ() + Utility.RandomFloat(-TeleportMinMaxAngle, TeleportMinMaxAngle)
+				ThisActor.MoveTo(PlayerRef, TeleportDist * Math.Sin(aZ), TeleportDist * Math.Cos(aZ), 0.0, true)
+			endif
+			ThisActor.EnableNoWait(true)
+			ThisActor.EvaluatePackage()
 		else
 			SetSpeedup(ThisActor, dist > maxDist * 0.5)
 		endif
@@ -317,8 +365,8 @@ function SetSpeedup(Actor ThisActor, bool punchIt)
 			return
 		endif
 
-		FollowerAdjSpeedMult += 100
 		ThisActor.ModActorValue("SpeedMult", 100.0)
+		FollowerAdjSpeedMult += 100
 		ApplySpeedMult(ThisActor)
 		;Debug.Trace("foxFollowActor - initiating warp speed... Mach " + FollowerAdjSpeedMult)
 	elseif (FollowerAdjSpeedMult)
@@ -330,7 +378,6 @@ function SetSpeedup(Actor ThisActor, bool punchIt)
 endFunction
 function ApplySpeedMult(Actor ThisActor)
 	;CarryWeight must be adjusted for SpeedMult to apply
-	float wt = ThisActor.GetBaseActorValue("CarryWeight")
-	ThisActor.SetActorValue("CarryWeight", wt + 1.0)
-	ThisActor.SetActorValue("CarryWeight", wt)
+	ThisActor.ModActorValue("CarryWeight", 1.0)
+	ThisActor.ModActorValue("CarryWeight", -1.0)
 endFunction

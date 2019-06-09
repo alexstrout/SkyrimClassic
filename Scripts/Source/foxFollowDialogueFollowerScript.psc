@@ -53,7 +53,6 @@ GlobalVariable Property GlobalAdjMagicka Auto
 int Property foxFollowVer Auto
 int Property foxFollowScriptVer = 1 AutoReadOnly
 
-float Property WaitAroundForPlayerGameTime = 72.0 AutoReadOnly
 float Property InitialUpdateTime = 2.0 AutoReadOnly
 float Property DialogWaitGameTime = 0.1 AutoReadOnly
 
@@ -62,6 +61,9 @@ int CommandMode
 bool RequestCommandMode
 bool ClearCommandModeNextUpdate
 
+;================
+;Debug Stuff
+;================
 ;Useful debug hotkeys
 ; event DebugControlDown(string control)
 ; 	UnregisterForAllControls()
@@ -120,9 +122,22 @@ bool ClearCommandModeNextUpdate
 ; 	RegisterForControl("Sprint")
 ; endEvent
 
+;================
+;Mod Initialization and Updating
+;================
 ;Init our stuff - hey since we're a separate script now this will actually always run on first load, hooray!
 event OnInit()
 	RegisterForSingleUpdate(InitialUpdateTime)
+endEvent
+event OnUpdate()
+	;Wait until we gain control of our character to perform CheckForModUpdate
+	;TODO RegisterForSingleUpdateGameTime may be able to do this for us automatically - see https://www.creationkit.com/index.php?title=RegisterForSingleUpdateGameTime_-_Form
+	;However, it sounds like GameTime updates only can't be _registered_ when not in control - nothing about when those updates actually fire (or don't fire, in this case)
+	if (!Game.IsActivateControlsEnabled() || !Game.IsMovementControlsEnabled())
+		RegisterForSingleUpdate(InitialUpdateTime)
+		return
+	endif
+	CheckForModUpdate()
 endEvent
 
 ;See if we need to update from an old save (or first run from vanilla save)
@@ -130,6 +145,7 @@ endEvent
 function CheckForModUpdate()
 	if (foxFollowVer < foxFollowScriptVer)
 		;Set foxFollowVer ASAP to avoid mod updates being run twice from two threads
+		;No big deal if this happens, but it's still unsightly :)
 		int ver = foxFollowVer
 		foxFollowVer = foxFollowScriptVer
 
@@ -155,13 +171,6 @@ function CheckForModUpdate()
 	;Note: Placed here to run every check in case we somehow unregister our key on accident (e.g. Steam cloud not carrying SKSE co-save)
 	RegisterForControl("Sprint")
 endFunction
-event OnUpdate()
-	if (!Game.IsActivateControlsEnabled() || !Game.IsMovementControlsEnabled())
-		RegisterForSingleUpdate(InitialUpdateTime)
-		return
-	endif
-	CheckForModUpdate()
-endEvent
 function ModUpdate1()
 	;Tell our modified DialogueFollower to point to us, if it's somehow None (existing saves should pull the CK value, but PlayerRef somehow ended up None in foxPet)
 	if (!DialogueFollower.foxFollowDialogueFollower)
@@ -220,7 +229,11 @@ function ModUpdate1()
 	DialogueFollower.pAnimalAlias.UnRegisterForUpdate()
 endFunction
 
+;================
+;Hotkeys
+;================
 ;Handle any desired hotkeys - currently just Sprint for CommandMode
+;We do this as either IsKeyPressed or GetMappedKey doesn't seem to catch gamepads
 event OnControlDown(string control)
 	;DebugControlDown(control)
 	RequestCommandMode = true
@@ -230,6 +243,9 @@ event OnControlUp(string control, float HoldTime)
 	RequestCommandMode = false
 endEvent
 
+;================
+;Follower Alias Management (Add / Set / Remove)
+;================
 ;Attempt to add follower alias by ref - returns alias if successful
 ReferenceAlias function AddFollowerAlias(ObjectReference FollowerRef)
 	int i = 0
@@ -281,6 +297,9 @@ function RemoveFollowerAlias(ReferenceAlias FollowerAlias)
 	CheckPreferredFollowerAlias(false)
 endFunction
 
+;================
+;Follower Alias Management (Various Gets)
+;================
 ;Get follower alias at index
 ReferenceAlias function GetNthFollowerAlias(int i)
 	return Followers[i]
@@ -324,6 +343,11 @@ ReferenceAlias function GetFirstFollowerAlias()
 	return None
 endFunction
 
+;================
+;Preferred Follower Alias Management (Various Gets / Sets)
+;As DialogueFollower commands are intended for a either a single Follower or Animal alias, this is how we attempt to determine which follower we should actually apply commands to
+;Note: A rather big misnomer, the "isFollower" passed around is merely trying to determine if we're a humanoid follower (Follower) or animal follower (Animal)
+;================
 ;Attempt to untangle which follower we're talking about
 Actor function GetPreferredFollowerActorReference(bool isFollower)
 	if (isFollower)
@@ -355,13 +379,20 @@ endFunction
 
 ;Check our preferred follower, setting to first available if empty (so we have something for commands to use - also nice to have vanilla aliases filled for any third party scripts)
 function CheckPreferredFollowerAlias(bool isFollower)
-	;Note: GetPreferredFollowerAlias gets the alias in the follower array (if it exists), not the actual DialogueFollower alias (since we always know that anyway)
-	;GetPreferredFollowerActorRef can still test if the DialogueFollower alias itself is filled, though
+	;If our preferred follower is still valid, then we're all set and can bail early
+	;In the context of being called from RemoveFollowerAlias (where this is typically called from), this situation can arise if we've been:
+	;	-- group-dismissed via CommandMode
+	;	-- dismissed via some external scripted event
+	;	-- dismissed via hostile combat with player (oops)
+	;	-- probably other situations...
+	;Thus, we call GetPreferredFollowerAlias to get the alias in our follower array (if it exists) - not the actual DialogueFollower alias (since we always know that anyway)
 	if (GetPreferredFollowerAlias(isFollower))
 		;Debug.Trace("foxFollow CheckPreferredFollowerAlias found valid alias - IsFollower: " + isFollower)
 		return
 	endif
 
+	;If it's no longer valid, we need to fill it with our next best option of the same follower type (Follower / Animal)
+	;If there is nobody left to assign, only then do we clear it - testing GetPreferredFollowerActorReference to ensure the DialogueFollower alias itself is still filled / needs to be cleared
 	;Note: FollowerAlias.GetReference() as Actor implied through GetFirstFollowerAliasByType
 	ReferenceAlias FollowerAlias = GetFirstFollowerAliasByType(isFollower)
 	if (FollowerAlias)
@@ -386,11 +417,9 @@ function ClearPreferredFollowerAlias(bool isFollower, Actor FollowerActor = None
 	endif
 endFunction
 
-;Are we the probable target for follow / wait / dismiss? (e.g. recently in dialogue with player, recently interacted with... any clues)
-bool function MeetsPreferredFollowerAliasConditions(Actor FollowerActor)
-	return FollowerActor.IsInDialogueWithPlayer() || FollowerActor.IsDoingFavor()
-endFunction
-
+;================
+;Follower Type/Count Management
+;================
 ;Figure out if we're a follower follower or animal follower
 bool function IsFollower(Actor FollowerActor)
 	return FollowerActor.IsInFaction(FollowerInfoFaction)
@@ -431,9 +460,15 @@ bool function UpdateFollowerCount()
 	return false
 endFunction
 
+;================
+;CommandMode Management
+;This is how we determine if we're commanding multiple followers at once, and how we hold that state through the entire time we're in dialogue
+;================
 ;Check if we desire CommandMode (currently just holding Sprint key)
 bool function RequestingCommandMode()
-	return RequestCommandMode
+	;Also check IsKeyPressed manually in case we've just pressed the key and we're ahead of our OnControlDown event
+	;IsKeyPressed doesn't seem to catch gamepads (thus the OnControlDown event), but this will still help twitchy keyboard users :)
+	return RequestCommandMode || Input.IsKeyPressed(Input.GetMappedKey("Sprint"))
 endFunction
 
 ;Set CommandMode - for now, CommandMode > 0 means command all followers
@@ -461,13 +496,13 @@ bool function ClearCommandMode()
 	endif
 
 	Actor FollowerActor = GetPreferredFollowerActorReference(true)
-	if (FollowerActor && MeetsPreferredFollowerAliasConditions(FollowerActor))
+	if (FollowerActor && IsInteractingWithPlayer(FollowerActor))
 		;Debug.Trace("foxFollow ClearCommandMode waiting for Follower...")
 		ClearCommandModeNextUpdate = false
 		return false
 	endif
 	FollowerActor = GetPreferredFollowerActorReference(false)
-	if (FollowerActor && MeetsPreferredFollowerAliasConditions(FollowerActor))
+	if (FollowerActor && IsInteractingWithPlayer(FollowerActor))
 		;Debug.Trace("foxFollow ClearCommandMode waiting for Animal...")
 		ClearCommandModeNextUpdate = false
 		return false
@@ -484,6 +519,9 @@ bool function ClearCommandMode()
 	ClearCommandModeNextUpdate = false
 	return true
 endFunction
+bool function IsInteractingWithPlayer(Actor FollowerActor)
+	return FollowerActor.IsInDialogueWithPlayer() || FollowerActor.IsDoingFavor()
+endFunction
 
 ;Periodically ClearCommandMode
 event OnUpdateGameTime()
@@ -492,6 +530,10 @@ event OnUpdateGameTime()
 	endif
 endEvent
 
+;================
+;DialogueFollower Functions (Set / Follow / Wait / Dismiss)
+;These functions are what is actually called from DialogueFollower (and thus the rest of the game)
+;================
 ;Version of SetFollower that handles multiple followers
 function SetMultiFollower(ObjectReference FollowerRef, bool isFollower, ReferenceAlias ForcedDestAlias = None)
 	;Make sure our Follower array is good to go!
@@ -596,14 +638,13 @@ function FollowerMultiFollowWait(ReferenceAlias FollowerAlias, bool isFollower, 
 		return
 	endif
 
+	;Note: FollowerAlias now just entirely handles WaitAroundForPlayerGameTime update based on vanilla-style OnUnload event
 	(FollowerAlias.GetReference() as Actor).SetActorValue("WaitingForPlayer", mode)
-	if (mode > 0)
-		;SetObjectiveDisplayed(10, abforce = true)
-		FollowerAlias.RegisterForSingleUpdateGameTime(WaitAroundForPlayerGameTime)
-	else
-		;SetObjectiveDisplayed(10, abdisplayed = false)
-		FollowerAlias.RegisterForSingleUpdate(InitialUpdateTime)
-	endif
+	;if (mode > 0)
+	;	SetObjectiveDisplayed(10, abforce = true)
+	;else
+	;	SetObjectiveDisplayed(10, abdisplayed = false)
+	;endif
 endFunction
 
 ;Version of DismissFollower that handles multiple followers
@@ -653,11 +694,10 @@ function DismissMultiFollower(ReferenceAlias FollowerAlias, bool isFollower, int
 
 	;If we don't exist or we're dead, time for express dismissal! Hiyaa1
 	Actor FollowerActor = FollowerAlias.GetReference() as Actor
-	if (!FollowerActor || FollowerActor.IsDead())
+	if (!FollowerActor)
 		;Fairly standard FollowerAliasScript.OnDeath / TrainedAnimalScript.OnDeath... More or less
-		if (FollowerActor)
-			FollowerActor.RemoveFromFaction(DialogueFollower.pCurrentHireling)
-		elseif (iMessage != -1)
+		;Well, sort of. We now handle the IsDead case through the normal dismissal logic, as FollowerActor is still valid, so we should clean up like normal
+		if (iMessage != -1)
 			Debug.MessageBox("Can't dismiss None Actor! Oops\nClearing follower alias anyway...\nIsFollower: " + isFollower)
 		endif
 		DismissMultiFollowerClearAlias(FollowerAlias, FollowerActor, iMessage)
