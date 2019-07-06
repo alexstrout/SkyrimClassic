@@ -2,9 +2,8 @@ Follower AI Tweaks
 ------
 Implements a number of tweaks to allow for smoother AI following in large groups.
 
-[h1][u]Skyrim Special Edition Note[/u][/h1]
-[b]This will eventually make its way to SSE - I'll update this section when it does!
-As it would not rely on SKSE64, it should be compatible with all platforms.[/b]
+[h1][u]Skyrim Special Edition Version[/u][/h1]
+https://www.nexusmods.com/skyrimspecialedition/mods/26737
 
 [h1]Additional Information[/h1]
 Tweaks the following GMSTs:
@@ -12,7 +11,7 @@ Tweaks the following GMSTs:
 [*][b]fBumpReactionSmallWaitTimer[/b]: 3.0 -> 0.75
 	More responsive "move away" behavior when bumping into AI
 
-[*][b]fAIMoveDistanceToRecalcFollowPath: 300.0 -> 64.0
+[*][b]fAIMoveDistanceToRecalcFollowPath[/b]: 300.0 -> 64.0
 [*][b]fFollowRunMaxSpeedupMultiplier[/b]: 1.25 -> 1.5
 [*][b]fFollowRunMinSlowdownMultiplier[/b]: 0.75 -> 0.5
 [*][b]fFollowStartSprintDistance[/b]: 500.0 -> 512.0
@@ -41,8 +40,9 @@ Also tweaks PlayerFollowerPackage:
 The above tweaks primarily apply to recruited followers, and may or may not apply to quest followers on a case-by-case basis (they typically use all sorts of different AI packages).
 
 [h1]Compatibility[/h1]
-Should be compatible with anything that doesn't also mess with follower AI.
-(Specifically, anything that doesn't modify the above GMSTs or PlayerFollowerPackage)
+Should be compatible with anything that doesn't also tweak the above values.
+Should work in any multi-follower mod (though it may have a reduced effect, depending on the mod).
+If unsure, simply load this first, and whatever is loaded later will take precedence.
 
 [h1]Uninstall Steps[/h1]
 Simply remove the plugin as normal; no save cleaning necessary.

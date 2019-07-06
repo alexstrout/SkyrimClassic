@@ -2,6 +2,9 @@ Simple Pet Fox - Kitt / Sola
 ------
 Adds Kitt and Sola, two simple pet foxes, to Dragonsreach.
 
+[h1][u]Skyrim Special Edition Version[/u][/h1]
+https://www.nexusmods.com/skyrimspecialedition/mods/26441
+
 [h1]Usage[/h1]
 Simply approach and talk to either fox, and they'll be recruited into your party.
 If you already have an animal following, that animal will be dismissed.
@@ -33,6 +36,8 @@ https://www.nexusmods.com/skyrim/mods/76776
 
 [h1]Known Issues[/h1]
 The bleedout state on animals is a little weird - since they have no bleedout animations, they will appear to just sit there in an idle combat state. However, they will eventually become active again, like normal followers.
+
+Very rarely, one or both foxes won't spawn inside Dragonsreach. I'm currently unsure why this happens, but it can be worked around by saving and restarting the game, after which they will appear as expected.
 ------
 Revision History:
 r14:

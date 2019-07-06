@@ -3,8 +3,9 @@ No Auto-Aim
 Disables archery auto-aiming.
 
 [h1][u]Skyrim Special Edition Version[/u][/h1]
-[b]https://bethesda.net/en/mods/SKYRIM/mod-detail/3031493
-(ported by Lou the Lou - thank you!)[/b]
+https://www.nexusmods.com/skyrimspecialedition/mods/26448
+https://bethesda.net/en/mods/SKYRIM/mod-detail/3031493
+(bethesda-net version ported for all platforms by Lou the Lou - thank you!)
 
 [h1]Additional Information[/h1]
 Normally, Skyrim automatically aims your arrows toward enemies near your crosshair.

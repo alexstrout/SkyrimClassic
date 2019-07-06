@@ -2,9 +2,8 @@ No Disarm (Unequip Instead)
 ------
 Tired of looking for disarmed weapons? You're in luck! Disarms are replaced by a simple unequip.
 
-[h1][u]Skyrim Special Edition Note[/u][/h1]
-[b]This will eventually make its way to SSE - I'll update this section when it does!
-As it would not rely on SKSE64, it should be compatible with all platforms.[/b]
+[h1][u]Skyrim Special Edition Version[/u][/h1]
+https://www.nexusmods.com/skyrimspecialedition/mods/27188
 
 [h1]Additional Information[/h1]
 Changes all vanilla "Disarm" type MagicEffects to "Stagger" type instead.
@@ -14,6 +13,7 @@ NPCs usually re-equip the "disarmed" weapons after the stagger, but sometimes th
 
 [h1]Compatibility[/h1]
 Should be compatible with anything that doesn't also mess with vanilla Disarm MGEFs.
+(This includes DLC! DLC does not add or change any Disarm effects.)
 
 [h1]Uninstall Steps[/h1]
 Simply remove the plugin as normal; no save cleaning necessary.
@@ -21,7 +21,7 @@ Simply remove the plugin as normal; no save cleaning necessary.
 [h1]Acknowledgments[/h1]
 EnaiSiaion's Wildcat - Combat of Skyrim:
 https://www.nexusmods.com/skyrim/mods/76529
-No Disarm's unequip was directly inspired by Wildcat's disarm functionality.
+No Disarm's unequip was directly inspired by Wildcat's arm injury "disarm" functionality.
 However, I noticed Wildcat did not affect vanilla Disarms, so I made this plugin.
 Also, Wildcat is dope.
 ------
