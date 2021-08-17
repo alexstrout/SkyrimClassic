@@ -2,8 +2,10 @@ No Disarm (Unequip Instead)
 ------
 Tired of looking for disarmed weapons? You're in luck! Disarms are replaced by a simple unequip.
 
-[h1][u]Skyrim Special Edition Version[/u][/h1]
-https://www.nexusmods.com/skyrimspecialedition/mods/27188
+[h1]Alternate Downloads[/h1]
+Manual Download (GitHub) - https://github.com/alexstrout/SkyrimClassic
+Special Edition (GitHub) - https://github.com/alexstrout/SkyrimSE
+Special Edition (Nexus) - https://www.nexusmods.com/skyrimspecialedition/mods/27188
 
 [h1]Additional Information[/h1]
 Changes all vanilla "Disarm" type MagicEffects to "Stagger" type instead.

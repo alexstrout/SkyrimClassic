@@ -2,8 +2,10 @@ Follower AI Tweaks
 ------
 Implements a number of tweaks to allow for smoother AI following in large groups.
 
-[h1][u]Skyrim Special Edition Version[/u][/h1]
-https://www.nexusmods.com/skyrimspecialedition/mods/26737
+[h1]Alternate Downloads[/h1]
+Manual Download (GitHub) - https://github.com/alexstrout/SkyrimClassic
+Special Edition (GitHub) - https://github.com/alexstrout/SkyrimSE
+Special Edition (Nexus) - https://www.nexusmods.com/skyrimspecialedition/mods/26737
 
 [h1]Additional Information[/h1]
 Tweaks the following GMSTs:
@@ -41,7 +43,7 @@ The above tweaks primarily apply to recruited followers, and may or may not appl
 
 [h1]Compatibility[/h1]
 Should be compatible with anything that doesn't also tweak the above values.
-Should work in any multi-follower mod (though it may have a reduced effect, depending on the mod).
+Should work in any multi-follower mod (though it may have a reduced effect).
 If unsure, simply load this first, and whatever is loaded later will take precedence.
 
 [h1]Uninstall Steps[/h1]
